@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Not An Ordinary Alarm Clock</string>
+    <string name="alarm_channel_name">Alarms</string>
+    <string name="alarm_channel_desc">Loud alarm notifications</string>
+    <string name="wake_up">Wake up!</string>
+    <string name="alarm_ringing">Your alarm is ringing</string>
+    <string name="solve_to_dismiss">Solve to dismiss: %1$s</string>
+    <string name="problem_progress">Problem %1$d of %2$d</string>
+    <string name="try_again">Wrong answer, try again</string>
+    <string name="submit">Submit</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="snooze">Snooze 5 min</string>
+    <string name="no_alarms">No alarms yet. Tap + to add one.</string>
+    <string name="add_alarm">Add alarm</string>
+    <string name="delete_alarm">Delete alarm</string>
+    <string name="label_hint">Label (optional)</string>
+    <string name="repeat">Repeat</string>
+    <string name="mon">Mon</string>
+    <string name="tue">Tue</string>
+    <string name="wed">Wed</string>
+    <string name="thu">Thu</string>
+    <string name="fri">Fri</string>
+    <string name="sat">Sat</string>
+    <string name="sun">Sun</string>
+    <string name="vibrate">Vibrate</string>
+    <string name="require_math_challenge">Require math challenge to dismiss</string>
+    <string name="allow_snooze">Allow snooze</string>
+    <string name="test_sound">Test alarm sound</string>
+    <string name="stop_test">Stop test</string>
+    <string name="save">Save alarm</string>
+    <string name="delete">Delete alarm</string>
+</resources>

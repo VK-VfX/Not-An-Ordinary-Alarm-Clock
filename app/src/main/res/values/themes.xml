@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AlarmClock" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/alarm_primary</item>
+        <item name="colorPrimaryVariant">@color/alarm_primary_dark</item>
+    </style>
+
+    <style name="Theme.AlarmRing" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/alarm_ring_background</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="colorPrimary">@color/alarm_primary</item>
+    </style>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="alarm_primary">#FF5252</color>
+    <color name="alarm_primary_dark">#C50E29</color>
+    <color name="alarm_ring_background">#B71C1C</color>
+    <color name="alarm_ring_text">#FFFFFF</color>
+</resources>
