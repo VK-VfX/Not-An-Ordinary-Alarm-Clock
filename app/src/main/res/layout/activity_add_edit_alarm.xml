@@ -20,7 +20,6 @@
 
             <NumberPicker
                 android:id="@+id/hourPicker"
-                style="@style/Widget.AlarmClock.NumberPicker"
                 android:layout_width="72dp"
                 android:layout_height="180dp"
                 android:hapticFeedbackEnabled="true" />
@@ -36,14 +35,12 @@
 
             <NumberPicker
                 android:id="@+id/minutePicker"
-                style="@style/Widget.AlarmClock.NumberPicker"
                 android:layout_width="72dp"
                 android:layout_height="180dp"
                 android:hapticFeedbackEnabled="true" />
 
             <NumberPicker
                 android:id="@+id/amPmPicker"
-                style="@style/Widget.AlarmClock.NumberPicker"
                 android:layout_width="88dp"
                 android:layout_height="180dp"
                 android:layout_marginStart="8dp"

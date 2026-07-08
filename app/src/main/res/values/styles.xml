@@ -24,8 +24,4 @@
         <item name="cardBackgroundColor">?attr/colorSurface</item>
     </style>
 
-    <style name="Widget.AlarmClock.NumberPicker" parent="android:Widget">
-        <item name="android:selectionDivider">@null</item>
-        <item name="android:selectionDividerHeight">0dp</item>
-    </style>
 </resources>
