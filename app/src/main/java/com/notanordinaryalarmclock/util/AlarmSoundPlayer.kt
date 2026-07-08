@@ -8,8 +8,9 @@ import kotlin.math.sin
 
 /**
  * Synthesizes a harsh, sweeping siren tone directly on the ALARM stream instead of
- * bundling a licensed audio asset. The frequency sweep (600Hz-1400Hz) is deliberately
- * piercing so it cuts through sleep and ambient noise.
+ * bundling a licensed audio asset. A fundamental sweep (550Hz-1450Hz) is layered with a
+ * quieter x1.5 overtone and soft-clipped, which makes the tone read as buzzy/piercing
+ * rather than a clean tone — deliberately unpleasant so it cuts through sleep.
  */
 class AlarmSoundPlayer {
 
@@ -65,13 +66,16 @@ class AlarmSoundPlayer {
         val buffer = ShortArray(minBuffer / 2)
         var phase = 0.0
         var sweepPhase = 0.0
-        val sweepSpeed = 2.0 * Math.PI * 0.6 / sampleRate
+        val sweepSpeed = 2.0 * Math.PI * 0.8 / sampleRate
 
         while (playing) {
-            val freq = 1000.0 + 400.0 * sin(sweepPhase)
+            val freq = 1000.0 + 450.0 * sin(sweepPhase)
             for (i in buffer.indices) {
                 phase += 2.0 * Math.PI * freq / sampleRate
-                buffer[i] = (Short.MAX_VALUE * 0.95 * sin(phase)).toInt().toShort()
+                val fundamental = sin(phase)
+                val overtone = sin(phase * 1.5)
+                val mixed = (0.72 * fundamental + 0.34 * overtone).coerceIn(-1.0, 1.0)
+                buffer[i] = (Short.MAX_VALUE * mixed).toInt().toShort()
                 sweepPhase += sweepSpeed
             }
             track.write(buffer, 0, buffer.size)

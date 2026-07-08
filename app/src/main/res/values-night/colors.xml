@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_background">#101018</color>
+    <color name="app_surface">#1B1B26</color>
+    <color name="app_surface_variant">#262233</color>
+    <color name="app_on_surface">#F2F0EF</color>
+    <color name="app_on_surface_variant">#B8B3AC</color>
+    <color name="app_outline">#34313C</color>
+</resources>

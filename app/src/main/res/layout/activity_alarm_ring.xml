@@ -1,80 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/alarm_ring_background"
-    android:gravity="center"
-    android:orientation="vertical"
     android:padding="24dp">
+
+    <ImageView
+        android:id="@+id/pulseIcon"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_ring_icon_circle"
+        android:contentDescription="@null"
+        android:padding="16dp"
+        android:src="@drawable/ic_alarm"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/ring_on_gradient" />
+
+    <TextView
+        android:id="@+id/kickerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:letterSpacing="0.2"
+        android:text="@string/wake_up_kicker"
+        android:textColor="@color/ring_on_gradient_muted"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pulseIcon" />
+
+    <TextView
+        android:id="@+id/currentTimeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="sans-serif-light"
+        android:textColor="@color/ring_on_gradient"
+        android:textSize="64sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/kickerText"
+        tools:text="7:00 AM" />
 
     <TextView
         android:id="@+id/labelText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/alarm_ring_text"
-        android:textSize="28sp"
-        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/ring_on_gradient_muted"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/currentTimeText"
         tools:text="Wake up!" />
 
     <LinearLayout
         android:id="@+id/challengeGroup"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:background="@drawable/bg_ring_input"
         android:gravity="center"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="24dp"
+        app:layout_constraintBottom_toTopOf="@id/snoozeButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelText"
+        app:layout_constraintVertical_bias="0.5">
 
         <TextView
             android:id="@+id/progressText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/alarm_ring_text"
+            android:textColor="@color/ring_on_gradient_muted"
+            android:textSize="13sp"
             tools:text="Problem 1 of 3" />
 
         <TextView
             android:id="@+id/questionText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="@color/alarm_ring_text"
-            android:textSize="22sp"
-            tools:text="Solve to dismiss: 7 × 8" />
+            android:layout_marginTop="12dp"
+            android:textColor="@color/ring_on_gradient"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            tools:text="7 × 8 = ?" />
 
         <EditText
             android:id="@+id/answerInput"
-            android:layout_width="160dp"
-            android:layout_height="wrap_content"
+            android:layout_width="140dp"
+            android:layout_height="56dp"
             android:layout_marginTop="16dp"
+            android:background="@drawable/bg_ring_input"
             android:gravity="center"
             android:imeOptions="actionDone"
             android:inputType="numberSigned"
-            android:textColor="@color/alarm_ring_text"
-            android:textColorHint="@color/alarm_ring_text"
+            android:textColor="@color/ring_on_gradient"
+            android:textColorHint="@color/ring_on_gradient_muted"
             android:textSize="24sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/submitButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
             android:layout_marginTop="16dp"
-            android:text="@string/submit" />
+            android:backgroundTint="@color/ring_on_gradient"
+            android:text="@string/submit"
+            android:textColor="@color/ring_gradient_start"
+            app:cornerRadius="16dp" />
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/dismissDirectButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:backgroundTint="@color/ring_on_gradient"
         android:text="@string/dismiss"
-        android:visibility="gone" />
+        android:textColor="@color/ring_gradient_start"
+        android:visibility="gone"
+        app:cornerRadius="16dp"
+        app:layout_constraintBottom_toTopOf="@id/snoozeButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/labelText"
+        app:layout_constraintVertical_bias="0.5"
+        tools:visibility="visible" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/snoozeButton"
         style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:text="@string/snooze" />
+        android:layout_marginBottom="16dp"
+        android:text="@string/snooze"
+        android:textColor="@color/ring_on_gradient"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

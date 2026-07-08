@@ -1,10 +1,13 @@
 package com.notanordinaryalarmclock
 
+import android.animation.ValueAnimator
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +17,7 @@ import com.notanordinaryalarmclock.data.AlarmDatabase
 import com.notanordinaryalarmclock.databinding.ActivityAlarmRingBinding
 import com.notanordinaryalarmclock.util.MathChallenge
 import com.notanordinaryalarmclock.util.MathProblem
+import com.notanordinaryalarmclock.util.TimeFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,6 +31,15 @@ class AlarmRingActivity : AppCompatActivity() {
     private val problemsRequired = 3
     private var alarmId = -1
 
+    private val clockHandler = Handler(Looper.getMainLooper())
+    private var pulseAnimator: ValueAnimator? = null
+    private val clockTicker = object : Runnable {
+        override fun run() {
+            binding.currentTimeText.text = TimeFormat.formatClockTime(this@AlarmRingActivity, System.currentTimeMillis())
+            clockHandler.postDelayed(this, 1000)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         showOverLockScreen()
@@ -35,6 +48,9 @@ class AlarmRingActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         alarmId = intent.getIntExtra(AlarmScheduler.EXTRA_ALARM_ID, -1)
+
+        clockHandler.post(clockTicker)
+        startPulseAnimation()
 
         binding.answerInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -64,6 +80,20 @@ class AlarmRingActivity : AppCompatActivity() {
         }
     }
 
+    private fun startPulseAnimation() {
+        pulseAnimator = ValueAnimator.ofFloat(1f, 1.15f).apply {
+            duration = 900
+            repeatMode = ValueAnimator.REVERSE
+            repeatCount = ValueAnimator.INFINITE
+            addUpdateListener {
+                val scale = it.animatedValue as Float
+                binding.pulseIcon.scaleX = scale
+                binding.pulseIcon.scaleY = scale
+            }
+            start()
+        }
+    }
+
     private fun showOverLockScreen() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -85,7 +115,7 @@ class AlarmRingActivity : AppCompatActivity() {
 
     private fun showNextProblem() {
         currentProblem = MathChallenge.generate()
-        binding.questionText.text = getString(R.string.solve_to_dismiss, currentProblem.question)
+        binding.questionText.text = getString(R.string.math_question_format, currentProblem.question)
         binding.answerInput.text?.clear()
         binding.progressText.text = getString(R.string.problem_progress, problemsSolved + 1, problemsRequired)
     }
@@ -121,5 +151,11 @@ class AlarmRingActivity : AppCompatActivity() {
     @Suppress("OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
         // Intentionally blocked: the alarm can only be dismissed via the challenge/buttons.
+    }
+
+    override fun onDestroy() {
+        clockHandler.removeCallbacks(clockTicker)
+        pulseAnimator?.cancel()
+        super.onDestroy()
     }
 }

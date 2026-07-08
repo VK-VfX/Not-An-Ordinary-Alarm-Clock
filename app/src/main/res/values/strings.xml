@@ -5,7 +5,7 @@
     <string name="alarm_channel_desc">Loud alarm notifications</string>
     <string name="wake_up">Wake up!</string>
     <string name="alarm_ringing">Your alarm is ringing</string>
-    <string name="solve_to_dismiss">Solve to dismiss: %1$s</string>
+    <string name="math_question_format">%1$s = ?</string>
     <string name="problem_progress">Problem %1$d of %2$d</string>
     <string name="try_again">Wrong answer, try again</string>
     <string name="submit">Submit</string>
@@ -30,4 +30,38 @@
     <string name="stop_test">Stop test</string>
     <string name="save">Save alarm</string>
     <string name="delete">Delete alarm</string>
+
+    <string name="next_alarm">Next alarm</string>
+    <string name="rings_in_hours_minutes">Rings in %1$dh %2$dm</string>
+    <string name="rings_in_minutes">Rings in %1$dm</string>
+    <string name="one_time">One-time</string>
+    <string name="section_repeat">Repeat</string>
+    <string name="section_options">Options</string>
+    <string name="wake_up_kicker">WAKE UP</string>
+
+    <string name="day_mon_short">M</string>
+    <string name="day_tue_short">T</string>
+    <string name="day_wed_short">W</string>
+    <string name="day_thu_short">T</string>
+    <string name="day_fri_short">F</string>
+    <string name="day_sat_short">S</string>
+    <string name="day_sun_short">S</string>
+
+    <string name="app_widget_description">Shows the current time and your next alarm</string>
+    <string name="widget_no_alarms">No alarms set</string>
+    <string name="widget_tap_hint">Tap to open</string>
+
+    <string name="action_tips">Tips</string>
+    <string name="tips_title">Wake up with one alarm</string>
+    <string name="tips_body"><![CDATA[This app is built to make sure a single alarm actually wakes you — but the science says the alarm is only half the job:
+
+• Sleep in 90-minute cycles. Waking mid-cycle feels awful; waking at the end feels natural. Try for a total sleep time that's a multiple of 90 minutes (6h, 7.5h, 9h).
+
+• Snoozing restarts your sleep cycle, then yanks you out of it minutes later — that's what causes grogginess, not the wake-up itself. This app's math challenge exists to stop you from drifting back off.
+
+• Keep your wake time fixed, even on weekends. Your body clock will start waking you up on its own a few minutes early.
+
+• The moment you're up, get bright light and a glass of water — both cut morning grogginess more than people expect.
+
+• Give yourself a reason to get up: coffee, a podcast, a few quiet minutes before the day starts.]]></string>
 </resources>

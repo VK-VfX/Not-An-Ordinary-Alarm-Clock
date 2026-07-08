@@ -5,6 +5,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.IBinder
 import android.os.PowerManager
@@ -30,6 +32,7 @@ class AlarmService : Service() {
     private var vibrator: Vibrator? = null
     private var volumeEscalationJob: Job? = null
     private var alarmId: Int = -1
+    private var audioFocusRequest: AudioFocusRequest? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -47,6 +50,7 @@ class AlarmService : Service() {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxVolume, 0)
+        requestAudioFocus(audioManager)
 
         serviceScope.launch(Dispatchers.IO) {
             val vibrate = alarmId.takeIf { it != -1 }
@@ -59,6 +63,24 @@ class AlarmService : Service() {
         escalateVolume(audioManager, maxVolume)
 
         return START_STICKY
+    }
+
+    /**
+     * STREAM_ALARM already plays regardless of ringer mode, but grabbing transient focus
+     * signals other apps (music, podcasts) to duck or pause, so the siren isn't competing
+     * with whatever the phone was already playing.
+     */
+    private fun requestAudioFocus(audioManager: AudioManager) {
+        val attributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .setAudioAttributes(attributes)
+            .setWillPauseWhenDucked(false)
+            .build()
+        audioFocusRequest = request
+        audioManager.requestAudioFocus(request)
     }
 
     private fun buildNotification(): Notification {
@@ -92,12 +114,16 @@ class AlarmService : Service() {
         vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
     }
 
+    /**
+     * Starts loud (65% of max) rather than a gentle ramp from near-silent, since the goal is
+     * a guaranteed wake-up, then climbs to full volume within ~10 seconds.
+     */
     private fun escalateVolume(audioManager: AudioManager, maxVolume: Int) {
         volumeEscalationJob = serviceScope.launch {
-            var current = (maxVolume * 0.4f).toInt().coerceAtLeast(1)
+            var current = (maxVolume * 0.65f).toInt().coerceAtLeast(1)
             audioManager.setStreamVolume(AudioManager.STREAM_ALARM, current, 0)
             while (isActive && current < maxVolume) {
-                delay(4000)
+                delay(2000)
                 current = (current + 1).coerceAtMost(maxVolume)
                 audioManager.setStreamVolume(AudioManager.STREAM_ALARM, current, 0)
             }
@@ -109,6 +135,9 @@ class AlarmService : Service() {
         soundPlayer?.stop()
         vibrator?.cancel()
         wakeLock?.let { if (it.isHeld) it.release() }
+        audioFocusRequest?.let {
+            (getSystemService(Context.AUDIO_SERVICE) as AudioManager).abandonAudioFocusRequest(it)
+        }
         serviceScope.cancel()
         super.onDestroy()
     }

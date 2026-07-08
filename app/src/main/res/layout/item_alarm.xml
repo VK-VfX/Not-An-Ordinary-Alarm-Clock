@@ -2,35 +2,38 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.AlarmClock.SectionCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+    android:checkable="false"
     android:clickable="true"
     android:focusable="true"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:rippleColor="?attr/colorPrimary">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="18dp">
 
         <TextView
             android:id="@+id/timeText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="32sp"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="30sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/enabledSwitch"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="07:00" />
+            tools:text="7:00 AM" />
 
         <TextView
             android:id="@+id/labelText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:textColor="?attr/colorOnSurface"
             app:layout_constraintEnd_toStartOf="@id/enabledSwitch"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/timeText"
@@ -42,12 +45,13 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textColor="?attr/colorPrimary"
+            android:textStyle="bold"
             app:layout_constraintEnd_toStartOf="@id/enabledSwitch"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/labelText"
-            tools:text="Mon Tue Wed" />
+            tools:text="MON · WED · FRI" />
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
+        <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/enabledSwitch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -63,7 +67,8 @@
             android:src="@drawable/ic_delete"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorOnSurfaceVariant" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

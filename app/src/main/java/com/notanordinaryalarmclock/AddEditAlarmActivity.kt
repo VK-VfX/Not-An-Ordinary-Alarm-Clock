@@ -9,6 +9,7 @@ import com.notanordinaryalarmclock.data.Alarm
 import com.notanordinaryalarmclock.data.AlarmDatabase
 import com.notanordinaryalarmclock.databinding.ActivityAddEditAlarmBinding
 import com.notanordinaryalarmclock.util.AlarmSoundPlayer
+import com.notanordinaryalarmclock.widget.AlarmWidgetProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -81,6 +82,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             val newId = dao.upsert(alarm)
             val saved = if (alarm.id == 0) alarm.copy(id = newId.toInt()) else alarm
             AlarmScheduler.schedule(this@AddEditAlarmActivity, saved)
+            AlarmWidgetProvider.requestUpdate(this@AddEditAlarmActivity)
             withContext(Dispatchers.Main) { finish() }
         }
     }
@@ -90,6 +92,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             AlarmScheduler.cancel(this@AddEditAlarmActivity, alarm)
             dao.delete(alarm)
+            AlarmWidgetProvider.requestUpdate(this@AddEditAlarmActivity)
             withContext(Dispatchers.Main) { finish() }
         }
     }

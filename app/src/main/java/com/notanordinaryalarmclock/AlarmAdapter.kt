@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.notanordinaryalarmclock.data.Alarm
 import com.notanordinaryalarmclock.databinding.ItemAlarmBinding
-import java.util.Locale
+import com.notanordinaryalarmclock.util.TimeFormat
 
 class AlarmAdapter(
     private val onToggle: (Alarm, Boolean) -> Unit,
@@ -27,10 +27,13 @@ class AlarmAdapter(
         val alarm = getItem(position)
         val binding = holder.binding
 
-        binding.timeText.text = String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute)
+        val context = binding.root.context
+        binding.timeText.text = TimeFormat.formatClockTime(context, alarm.hour, alarm.minute)
+        binding.timeText.alpha = if (alarm.enabled) 1f else 0.4f
         binding.labelText.text = alarm.label
         binding.labelText.isVisible = alarm.label.isNotBlank()
-        binding.daysText.text = formatDays(alarm.repeatDays)
+        binding.daysText.text = TimeFormat.formatDayLabels(alarm.repeatDays)
+            .ifEmpty { context.getString(R.string.one_time) }
 
         binding.enabledSwitch.setOnCheckedChangeListener(null)
         binding.enabledSwitch.isChecked = alarm.enabled
@@ -38,12 +41,6 @@ class AlarmAdapter(
 
         binding.root.setOnClickListener { onClick(alarm) }
         binding.deleteButton.setOnClickListener { onDelete(alarm) }
-    }
-
-    private fun formatDays(mask: Int): String {
-        if (mask == 0) return "One time"
-        val names = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-        return names.filterIndexed { index, _ -> (mask and (1 shl index)) != 0 }.joinToString(" ")
     }
 
     companion object {
