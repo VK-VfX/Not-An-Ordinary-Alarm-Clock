@@ -54,15 +54,5 @@
 
     <string name="action_tips">Tips</string>
     <string name="tips_title">Wake up with one alarm</string>
-    <string name="tips_body"><![CDATA[This app is built to make sure a single alarm actually wakes you — but the science says the alarm is only half the job:
-
-• Sleep in 90-minute cycles. Waking mid-cycle feels awful; waking at the end feels natural. Try for a total sleep time that's a multiple of 90 minutes (6h, 7.5h, 9h).
-
-• Snoozing restarts your sleep cycle, then yanks you out of it minutes later — that's what causes grogginess, not the wake-up itself. This app's math challenge exists to stop you from drifting back off.
-
-• Keep your wake time fixed, even on weekends. Your body clock will start waking you up on its own a few minutes early.
-
-• The moment you're up, get bright light and a glass of water — both cut morning grogginess more than people expect.
-
-• Give yourself a reason to get up: coffee, a podcast, a few quiet minutes before the day starts.]]></string>
+    <string name="tips_body">"This app is built to make sure a single alarm actually wakes you — but the science says the alarm is only half the job:\n\n• Sleep in 90-minute cycles. Waking mid-cycle feels awful; waking at the end feels natural. Try for a total sleep time that\'s a multiple of 90 minutes (6h, 7.5h, 9h).\n\n• Snoozing restarts your sleep cycle, then yanks you out of it minutes later — that\'s what causes grogginess, not the wake-up itself. This app\'s math challenge exists to stop you from drifting back off.\n\n• Keep your wake time fixed, even on weekends. Your body clock will start waking you up on its own a few minutes early.\n\n• The moment you\'re up, get bright light and a glass of water — both cut morning grogginess more than people expect.\n\n• Give yourself a reason to get up: coffee, a podcast, a few quiet minutes before the day starts."</string>
 </resources>
