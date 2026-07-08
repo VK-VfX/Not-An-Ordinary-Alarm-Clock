@@ -1,6 +1,7 @@
 package com.notanordinaryalarmclock
 
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import android.widget.NumberPicker
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -47,7 +48,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
         binding.deleteButton.setOnClickListener { delete() }
         binding.testSoundRow.setOnClickListener { toggleTestSound() }
 
-        val onPickerChanged = NumberPicker.OnValueChangeListener { _, _, _ -> updateDatePreview() }
+        val onPickerChanged = NumberPicker.OnValueChangeListener { picker, _, _ ->
+            picker.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+            updateDatePreview()
+        }
         binding.hourPicker.setOnValueChangedListener(onPickerChanged)
         binding.minutePicker.setOnValueChangedListener(onPickerChanged)
         binding.amPmPicker.setOnValueChangedListener(onPickerChanged)
