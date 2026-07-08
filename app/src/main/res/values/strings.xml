@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Not An Ordinary Alarm Clock</string>
+    <string name="app_name">NAOAC</string>
+    <string name="app_title">Not An Ordinary Alarm Clock</string>
     <string name="alarm_channel_name">Alarms</string>
     <string name="alarm_channel_desc">Loud alarm notifications</string>
     <string name="wake_up">Wake up!</string>
