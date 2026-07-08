@@ -15,6 +15,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.notanordinaryalarmclock.data.AlarmDatabase
 import com.notanordinaryalarmclock.databinding.ActivityAlarmRingBinding
+import com.notanordinaryalarmclock.util.AppSettings
 import com.notanordinaryalarmclock.util.MathChallenge
 import com.notanordinaryalarmclock.util.MathProblem
 import com.notanordinaryalarmclock.util.TimeFormat
@@ -22,13 +23,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * Full-screen ringing UI. There is no snooze: the alarm keeps sounding until the math
+ * challenge is solved (or, if the user has disabled that in Settings, until Dismiss is tapped).
+ */
 class AlarmRingActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAlarmRingBinding
     private var currentProblem: MathProblem = MathChallenge.generate()
-    private var problemsSolved = 0
-    private var snoozesLeft = 2
-    private val problemsRequired = 3
     private var alarmId = -1
 
     private val clockHandler = Handler(Looper.getMainLooper())
@@ -61,22 +63,20 @@ class AlarmRingActivity : AppCompatActivity() {
             }
         }
         binding.submitButton.setOnClickListener { checkAnswer() }
-        binding.snoozeButton.setOnClickListener { snooze() }
         binding.dismissDirectButton.setOnClickListener { finishAlarm() }
+
+        if (AppSettings.isMathChallengeRequired(this)) {
+            showProblem()
+        } else {
+            binding.challengeGroup.isVisible = false
+            binding.dismissDirectButton.isVisible = true
+        }
 
         lifecycleScope.launch {
             val alarm = withContext(Dispatchers.IO) {
                 AlarmDatabase.getInstance(this@AlarmRingActivity).alarmDao().getById(alarmId)
             }
             binding.labelText.text = alarm?.label?.takeIf { it.isNotBlank() } ?: getString(R.string.wake_up)
-            binding.snoozeButton.isVisible = alarm?.snoozeEnabled != false
-
-            if (alarm?.mathChallenge == false) {
-                binding.challengeGroup.isVisible = false
-                binding.dismissDirectButton.isVisible = true
-            } else {
-                showNextProblem()
-            }
         }
     }
 
@@ -113,34 +113,20 @@ class AlarmRingActivity : AppCompatActivity() {
         keyguardManager.requestDismissKeyguard(this, null)
     }
 
-    private fun showNextProblem() {
+    private fun showProblem() {
         currentProblem = MathChallenge.generate()
         binding.questionText.text = getString(R.string.math_question_format, currentProblem.question)
         binding.answerInput.text?.clear()
-        binding.progressText.text = getString(R.string.problem_progress, problemsSolved + 1, problemsRequired)
     }
 
     private fun checkAnswer() {
         val input = binding.answerInput.text?.toString()?.toIntOrNull()
         if (input != null && input == currentProblem.answer) {
-            problemsSolved++
-            if (problemsSolved >= problemsRequired) {
-                finishAlarm()
-            } else {
-                showNextProblem()
-            }
+            finishAlarm()
         } else {
             binding.answerInput.text?.clear()
             binding.answerInput.error = getString(R.string.try_again)
         }
-    }
-
-    private fun snooze() {
-        if (snoozesLeft <= 0 || alarmId == -1) return
-        snoozesLeft--
-        AlarmScheduler.scheduleSnooze(this, alarmId, minutesFromNow = 5)
-        stopService(Intent(this, AlarmService::class.java))
-        finishAndRemoveTask()
     }
 
     private fun finishAlarm() {
@@ -150,7 +136,7 @@ class AlarmRingActivity : AppCompatActivity() {
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
-        // Intentionally blocked: the alarm can only be dismissed via the challenge/buttons.
+        // Intentionally blocked: the alarm can only be dismissed via the challenge/button.
     }
 
     override fun onDestroy() {

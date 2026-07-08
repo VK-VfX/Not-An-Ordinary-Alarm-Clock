@@ -67,7 +67,7 @@
         android:gravity="center"
         android:orientation="vertical"
         android:padding="24dp"
-        app:layout_constraintBottom_toTopOf="@id/snoozeButton"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/labelText"
@@ -77,9 +77,9 @@
             android:id="@+id/progressText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="@string/solve_to_dismiss_kicker"
             android:textColor="@color/ring_on_gradient_muted"
-            android:textSize="13sp"
-            tools:text="Problem 1 of 3" />
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/questionText"
@@ -124,23 +124,11 @@
         android:textColor="@color/ring_gradient_start"
         android:visibility="gone"
         app:cornerRadius="16dp"
-        app:layout_constraintBottom_toTopOf="@id/snoozeButton"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/labelText"
         app:layout_constraintVertical_bias="0.5"
         tools:visibility="visible" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/snoozeButton"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="@string/snooze"
-        android:textColor="@color/ring_on_gradient"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

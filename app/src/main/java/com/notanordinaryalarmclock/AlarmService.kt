@@ -108,10 +108,15 @@ class AlarmService : Service() {
             .build()
     }
 
+    /**
+     * Tight, max-amplitude pulses rather than a gentle buzz-pause-buzz — the short gaps and
+     * forced full amplitude make this read as an insistent, hard vibration.
+     */
     private fun startVibration() {
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-        val pattern = longArrayOf(0, 800, 400, 800, 400)
-        vibrator?.vibrate(VibrationEffect.createWaveform(pattern, 0))
+        val timings = longArrayOf(0, 350, 120, 350, 120, 350, 500)
+        val amplitudes = intArrayOf(0, 255, 0, 255, 0, 255, 0)
+        vibrator?.vibrate(VibrationEffect.createWaveform(timings, amplitudes, 0))
     }
 
     /**

@@ -16,6 +16,10 @@ interface AlarmDao {
     @Query("SELECT * FROM alarms")
     suspend fun getAll(): List<Alarm>
 
+    /** Synchronous variant for callers already off the main thread, e.g. the widget provider. */
+    @Query("SELECT * FROM alarms")
+    fun getAllBlocking(): List<Alarm>
+
     @Query("SELECT * FROM alarms WHERE id = :id")
     suspend fun getById(id: Int): Alarm?
 

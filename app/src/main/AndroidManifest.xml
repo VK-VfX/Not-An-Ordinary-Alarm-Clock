@@ -39,6 +39,11 @@
             android:theme="@style/Theme.AlarmClock" />
 
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AlarmClock" />
+
+        <activity
             android:name=".AlarmRingActivity"
             android:exported="false"
             android:excludeFromRecents="true"
@@ -49,7 +54,7 @@
 
         <receiver android:name=".AlarmReceiver" android:exported="false" />
 
-        <receiver android:name=".BootReceiver" android:exported="false">
+        <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
@@ -63,7 +68,7 @@
 
         <receiver
             android:name=".widget.AlarmWidgetProvider"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

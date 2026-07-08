@@ -7,35 +7,34 @@
     <string name="wake_up">Wake up!</string>
     <string name="alarm_ringing">Your alarm is ringing</string>
     <string name="math_question_format">%1$s = ?</string>
-    <string name="problem_progress">Problem %1$d of %2$d</string>
+    <string name="solve_to_dismiss_kicker">Solve to dismiss</string>
     <string name="try_again">Wrong answer, try again</string>
     <string name="submit">Submit</string>
     <string name="dismiss">Dismiss</string>
-    <string name="snooze">Snooze 5 min</string>
     <string name="no_alarms">No alarms yet. Tap + to add one.</string>
     <string name="add_alarm">Add alarm</string>
     <string name="delete_alarm">Delete alarm</string>
+    <string name="alarm_deleted">Alarm deleted</string>
+    <string name="undo">Undo</string>
     <string name="label_hint">Label (optional)</string>
     <string name="repeat">Repeat</string>
-    <string name="mon">Mon</string>
-    <string name="tue">Tue</string>
-    <string name="wed">Wed</string>
-    <string name="thu">Thu</string>
-    <string name="fri">Fri</string>
-    <string name="sat">Sat</string>
-    <string name="sun">Sun</string>
+    <string name="mon">Monday</string>
+    <string name="tue">Tuesday</string>
+    <string name="wed">Wednesday</string>
+    <string name="thu">Thursday</string>
+    <string name="fri">Friday</string>
+    <string name="sat">Saturday</string>
+    <string name="sun">Sunday</string>
     <string name="vibrate">Vibrate</string>
-    <string name="require_math_challenge">Require math challenge to dismiss</string>
-    <string name="allow_snooze">Allow snooze</string>
     <string name="test_sound">Test alarm sound</string>
     <string name="stop_test">Stop test</string>
     <string name="save">Save alarm</string>
     <string name="delete">Delete alarm</string>
+    <string name="time_separator">:</string>
 
     <string name="next_alarm">Next alarm</string>
     <string name="rings_in_hours_minutes">Rings in %1$dh %2$dm</string>
     <string name="rings_in_minutes">Rings in %1$dm</string>
-    <string name="one_time">One-time</string>
     <string name="section_repeat">Repeat</string>
     <string name="section_options">Options</string>
     <string name="wake_up_kicker">WAKE UP</string>
@@ -48,11 +47,31 @@
     <string name="day_sat_short">S</string>
     <string name="day_sun_short">S</string>
 
+    <string name="date_preview_today">Today — %1$s</string>
+    <string name="date_preview_tomorrow">Tomorrow — %1$s</string>
+
+    <string name="sound_row_title">Sound</string>
+    <string name="sound_row_desc">Escalating siren (built-in)</string>
+    <string name="vibration_row_title">Vibration</string>
+    <string name="vibration_row_desc">Hard pulse</string>
+
     <string name="app_widget_description">Shows the current time and your next alarm</string>
     <string name="widget_no_alarms">No alarms set</string>
     <string name="widget_tap_hint">Tap to open</string>
 
     <string name="action_tips">Tips</string>
+    <string name="action_settings">Settings</string>
+    <string name="settings_title">Settings</string>
+
+    <string name="setting_math_challenge_title">Require math to dismiss</string>
+    <string name="setting_math_challenge_desc">Keeps the alarm ringing until a math question is solved. There is no snooze.</string>
+
+    <string name="settings_section_about">About</string>
+    <string name="about_version_format">Version %1$s (%2$d)</string>
+    <string name="about_credit">Vibe coded with love by Samuel Nicholas Salvador/Veera Krishnan</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="check_for_updates_desc">View releases on GitHub</string>
+
     <string name="tips_title">Wake up with one alarm</string>
-    <string name="tips_body">"This app is built to make sure a single alarm actually wakes you — but the science says the alarm is only half the job:\n\n• Sleep in 90-minute cycles. Waking mid-cycle feels awful; waking at the end feels natural. Try for a total sleep time that\'s a multiple of 90 minutes (6h, 7.5h, 9h).\n\n• Snoozing restarts your sleep cycle, then yanks you out of it minutes later — that\'s what causes grogginess, not the wake-up itself. This app\'s math challenge exists to stop you from drifting back off.\n\n• Keep your wake time fixed, even on weekends. Your body clock will start waking you up on its own a few minutes early.\n\n• The moment you\'re up, get bright light and a glass of water — both cut morning grogginess more than people expect.\n\n• Give yourself a reason to get up: coffee, a podcast, a few quiet minutes before the day starts."</string>
+    <string name="tips_body">"This app is built to make sure a single alarm actually wakes you — but the science says the alarm is only half the job:\n\n• Sleep in 90-minute cycles. Waking mid-cycle feels awful; waking at the end feels natural. Try for a total sleep time that\'s a multiple of 90 minutes (6h, 7.5h, 9h).\n\n• Snoozing restarts your sleep cycle, then yanks you out of it minutes later — that\'s what causes grogginess, not the wake-up itself. This app has no snooze: it keeps ringing until you solve a math question.\n\n• Keep your wake time fixed, even on weekends. Your body clock will start waking you up on its own a few minutes early.\n\n• The moment you\'re up, get bright light and a glass of water — both cut morning grogginess more than people expect.\n\n• Give yourself a reason to get up: coffee, a podcast, a few quiet minutes before the day starts."</string>
 </resources>

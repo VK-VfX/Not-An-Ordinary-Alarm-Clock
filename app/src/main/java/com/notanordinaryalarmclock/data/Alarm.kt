@@ -12,7 +12,5 @@ data class Alarm(
     /** Bitmask, bit0=Monday .. bit6=Sunday. 0 means a one-time alarm. */
     val repeatDays: Int = 0,
     val enabled: Boolean = true,
-    val vibrate: Boolean = true,
-    val mathChallenge: Boolean = true,
-    val snoozeEnabled: Boolean = true
+    val vibrate: Boolean = true
 )

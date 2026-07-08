@@ -23,13 +23,6 @@ object AlarmScheduler {
         alarmManager.cancel(buildPendingIntent(context, alarm.id))
     }
 
-    fun scheduleSnooze(context: Context, alarmId: Int, minutesFromNow: Int) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val pendingIntent = buildPendingIntent(context, alarmId)
-        val triggerAt = System.currentTimeMillis() + minutesFromNow * 60_000L
-        alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAt, pendingIntent), pendingIntent)
-    }
-
     private fun buildPendingIntent(context: Context, alarmId: Int): PendingIntent {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra(EXTRA_ALARM_ID, alarmId)

@@ -16,8 +16,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.notanordinaryalarmclock.data.Alarm
 import com.notanordinaryalarmclock.data.AlarmDatabase
 import com.notanordinaryalarmclock.databinding.ActivityMainBinding
@@ -43,13 +46,11 @@ class MainActivity : AppCompatActivity() {
 
         adapter = AlarmAdapter(
             onToggle = ::onToggleAlarm,
-            onClick = { alarm -> openEditor(alarm.id) },
-            onDelete = ::onDeleteAlarm
+            onClick = { alarm -> openEditor(alarm.id) }
         )
         binding.alarmList.layoutManager = LinearLayoutManager(this)
         binding.alarmList.adapter = adapter
-
-        binding.addAlarmFab.setOnClickListener { openEditor(-1) }
+        attachSwipeToDelete()
 
         lifecycleScope.launch {
             dao.getAllFlow().collect { alarms ->
@@ -68,11 +69,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_tips) {
-            showTipsDialog()
-            return true
+        when (item.itemId) {
+            R.id.action_add -> openEditor(-1)
+            R.id.action_settings -> startActivity(Intent(this, SettingsActivity::class.java))
+            R.id.action_tips -> showTipsDialog()
+            else -> return super.onOptionsItemSelected(item)
         }
-        return super.onOptionsItemSelected(item)
+        return true
     }
 
     private fun showTipsDialog() {
@@ -80,6 +83,42 @@ class MainActivity : AppCompatActivity() {
             .setTitle(R.string.tips_title)
             .setMessage(R.string.tips_body)
             .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    private fun attachSwipeToDelete() {
+        val callback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START or ItemTouchHelper.END) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ) = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                if (position == RecyclerView.NO_POSITION) return
+                val alarm = adapter.currentList[position]
+                deleteWithUndo(alarm)
+            }
+        }
+        ItemTouchHelper(callback).attachToRecyclerView(binding.alarmList)
+    }
+
+    private fun deleteWithUndo(alarm: Alarm) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            AlarmScheduler.cancel(this@MainActivity, alarm)
+            dao.delete(alarm)
+            AlarmWidgetProvider.requestUpdate(this@MainActivity)
+        }
+        Snackbar.make(binding.root, R.string.alarm_deleted, Snackbar.LENGTH_LONG)
+            .setAction(R.string.undo) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val restoredId = dao.upsert(alarm.copy(id = 0))
+                    val restored = alarm.copy(id = restoredId.toInt())
+                    if (restored.enabled) AlarmScheduler.schedule(this@MainActivity, restored)
+                    AlarmWidgetProvider.requestUpdate(this@MainActivity)
+                }
+            }
             .show()
     }
 
@@ -109,14 +148,6 @@ class MainActivity : AppCompatActivity() {
             dao.upsert(updated)
             if (enabled) AlarmScheduler.schedule(this@MainActivity, updated)
             else AlarmScheduler.cancel(this@MainActivity, updated)
-            AlarmWidgetProvider.requestUpdate(this@MainActivity)
-        }
-    }
-
-    private fun onDeleteAlarm(alarm: Alarm) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            AlarmScheduler.cancel(this@MainActivity, alarm)
-            dao.delete(alarm)
             AlarmWidgetProvider.requestUpdate(this@MainActivity)
         }
     }
