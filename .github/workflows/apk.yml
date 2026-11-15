@@ -2,7 +2,7 @@ name: Build APK
 # Builds a debug-signed, sideloadable APK as a downloadable workflow artifact. Does NOT publish a release.
 on:
   pull_request:
-    paths: ["android/**", "index.html", "app.js", "app.css", "vendor/**"]
+    paths: ["android/**", ".github/workflows/apk.yml", "index.html", "app.js", "app.css", "assets/**", "vendor/**"]
   workflow_dispatch:
 permissions:
   contents: read
