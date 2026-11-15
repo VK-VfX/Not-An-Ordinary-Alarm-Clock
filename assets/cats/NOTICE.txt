@@ -1,0 +1,3 @@
+Cat artwork: Noto Emoji © Google, licensed under the Apache License 2.0
+(https://github.com/googlefonts/noto-emoji). Packaged via svgmoji (MIT).
+Noto Emoji is the emoji set used by Gboard on Android.
