@@ -7,6 +7,14 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.media.AudioAttributes;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.webkit.JavascriptInterface;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.util.ArrayDeque;
+import java.util.Locale;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -24,6 +32,58 @@ public class MainActivity extends Activity {
     private WebView web;
     private String pendingOrigin;
     private GeolocationPermissions.Callback pendingCb;
+
+    // --- native text-to-speech (WebView has no reliable speechSynthesis) ---
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
+    private Locale defaultLocale = Locale.getDefault();
+    private final ArrayDeque<String[]> ttsQueue = new ArrayDeque<>(); // {text, languageTag or ""}
+    private int ttsId = 0;
+
+    private void initTts() {
+        tts = new TextToSpeech(this, status -> {
+            if (status != TextToSpeech.SUCCESS) return;
+            ttsReady = true;
+            try { if (tts.getVoice() != null) defaultLocale = tts.getVoice().getLocale(); } catch (Exception ignored) {}
+            tts.setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)   // ducks music like a real nav app
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override public void onStart(String id) {}
+                @Override public void onDone(String id) { runOnUiThread(() -> speakNext()); }
+                @Override public void onError(String id) { runOnUiThread(() -> speakNext()); }
+            });
+        });
+    }
+    /** Segments are spoken one after another so each can switch language (a Chinese place name gets a Chinese voice). */
+    private void speakNext() {
+        if (!ttsReady) return;
+        String[] s = ttsQueue.poll();
+        if (s == null) return;
+        Locale want = s[1].isEmpty() ? defaultLocale : Locale.forLanguageTag(s[1]);
+        int avail = tts.isLanguageAvailable(want);
+        tts.setLanguage(avail >= TextToSpeech.LANG_AVAILABLE ? want : defaultLocale);
+        tts.speak(s[0], TextToSpeech.QUEUE_FLUSH, null, "mc" + (ttsId++));
+    }
+    /** Exposed to the page as window.AndroidTTS */
+    private class TtsBridge {
+        @JavascriptInterface public boolean ready() { return ttsReady; }
+        @JavascriptInterface public void stop() { runOnUiThread(() -> { ttsQueue.clear(); if (ttsReady) tts.stop(); }); }
+        @JavascriptInterface public void speak(String json) {
+            runOnUiThread(() -> {
+                if (!ttsReady) return;
+                try {
+                    JSONArray a = new JSONArray(json);
+                    ttsQueue.clear(); tts.stop();
+                    for (int i = 0; i < a.length(); i++) {
+                        JSONObject o = a.getJSONObject(i);
+                        ttsQueue.add(new String[]{o.getString("text"), o.optString("lang", "")});
+                    }
+                    speakNext();
+                } catch (Exception ignored) {}
+            });
+        }
+    }
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -62,6 +122,8 @@ public class MainActivity extends Activity {
                 }
             }
         });
+        initTts();
+        web.addJavascriptInterface(new TtsBridge(), "AndroidTTS");
         web.loadUrl("https://" + HOST + "/index.html");
     }
 
@@ -72,6 +134,11 @@ public class MainActivity extends Activity {
             pendingCb.invoke(pendingOrigin, ok, false);
             pendingCb = null;
         }
+    }
+
+    @Override protected void onDestroy() {
+        if (tts != null) { tts.stop(); tts.shutdown(); }
+        super.onDestroy();
     }
 
     @Override public void onBackPressed() {

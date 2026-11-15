@@ -205,3 +205,7 @@ body.hud-on #scale { bottom: calc(172px + var(--sab)); }
 
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand img { border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.5); }
+
+button, .chip, .seg button, .alt, .fab { touch-action: manipulation; }
+#fabs .fab { font-size: 22px; line-height: 1; }
+#trafficCfg select { margin-bottom: 4px; }

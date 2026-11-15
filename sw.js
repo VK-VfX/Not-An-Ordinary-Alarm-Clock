@@ -1,6 +1,6 @@
 /* Maps and Cats service worker — offline shell + over-the-air updates.
    Bump VERSION (and APP_VERSION in app.js, version.json) to ship an update. */
-const VERSION = '1.0.0';
+const VERSION = '1.0.1';
 const CACHE = 'mapsandcats-' + VERSION;
 const SHELL = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.webmanifest',

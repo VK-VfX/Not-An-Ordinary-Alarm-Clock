@@ -49,6 +49,7 @@
   <button id="locateBtn" class="fab" aria-label="Centre on my location">
     <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
   </button>
+  <button id="trafficBtn" class="fab" aria-label="Toggle traffic">🚦</button>
 </div>
 
 <div id="toast" role="status" aria-live="polite"></div>
@@ -146,6 +147,20 @@
         <div class="hint" id="trafficHint"></div>
       </div>
       <label class="switch"><input id="trafficToggle" type="checkbox"><span></span></label>
+    </div>
+    <div id="trafficCfg">
+      <label class="group-title" for="trafficProv">Traffic source</label>
+      <select id="trafficProv">
+        <option value="tomtom">TomTom (free tier, your own key)</option>
+        <option value="custom">Custom tile URL</option>
+      </select>
+      <div id="trafficKeyRow">
+        <label class="group-title" for="trafficKey">TomTom API key</label>
+        <input id="trafficKey" type="password" autocomplete="off" placeholder="Paste your free TomTom key">
+        <p class="hint">Get a free key at developer.tomtom.com (no card needed for the free tier — check their current limits). Stored only on this device.</p>
+        <button id="trafficSave" class="btn ghost">Save &amp; turn on</button>
+      </div>
+      <p id="trafficCustomHint" class="hint" hidden>Set the XYZ tile URL under Custom servers → Traffic tiles.</p>
     </div>
   </div>
 

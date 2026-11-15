@@ -3,7 +3,7 @@
 (() => {
 'use strict';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const KL = [3.139, 101.687]; // [lat, lon] fallback view until we get a fix
@@ -11,7 +11,7 @@ const KL = [3.139, 101.687]; // [lat, lon] fallback view until we get a fix
 /* ================= state ================= */
 const KEY = 'mapsandcats.v1', RKEY = 'mapsandcats.routes';
 const S = Object.assign({
-  theme: 'dark', traffic: false, gkey: '', weight: 65, sim: false, xp: 0, caught: 0, avoidHw: false,
+  theme: 'dark', traffic: false, trafficProv: 'tomtom', trafficKey: '', gkey: '', weight: 65, sim: false, xp: 0, caught: 0, avoidHw: false,
   voice: { on: true, name: '' },
   servers: { photon: '', nominatim: '', osrm: '', traffic: '' },
   saved: { home: null, work: null, favs: [] }, recents: [], trips: [], country: null,
@@ -122,14 +122,19 @@ function onStyleLoad() {
   map.addLayer({ id: 'route-main', type: 'line', source: 'routes', filter: ['==', ['get', 'sel'], 1], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': acc, 'line-width': 6 } }, before);
   applyTraffic();
 }
-function trafficOK() { return /\{z\}.*\{x\}.*\{y\}|\{x\}.*\{y\}.*\{z\}/.test(S.servers.traffic || ''); }
+// Traffic: no free keyless source exists, so Maps and Cats supports TomTom's free-tier flow tiles (your own key) or any XYZ tile URL.
+function trafficTpl() {
+  if ((S.trafficProv || 'tomtom') === 'tomtom') return S.trafficKey ? `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${encodeURIComponent(S.trafficKey)}&tileSize=256` : '';
+  return (S.servers.traffic || '').trim();
+}
+function trafficOK() { const t = trafficTpl(); return ['{z}', '{x}', '{y}'].every(k => t.includes(k)); }
 function applyTraffic() {
   if (!map?.isStyleLoaded()) return;
-  const want = S.traffic && S.theme !== 'quest' && trafficOK();
+  const want = S.traffic && S.theme !== 'quest' && trafficOK(); syncTrafficBtn();
   if (map.getLayer('traffic')) map.removeLayer('traffic');
   if (map.getSource('traffic')) map.removeSource('traffic');
   if (want) {
-    map.addSource('traffic', { type: 'raster', tiles: [S.servers.traffic], tileSize: 256 });
+    map.addSource('traffic', { type: 'raster', tiles: [trafficTpl()], tileSize: 256 });
     map.addLayer({ id: 'traffic', type: 'raster', source: 'traffic', paint: { 'raster-opacity': .85 } }, map.getLayer('route-alt') ? 'route-alt' : undefined);
   }
 }
@@ -542,24 +547,31 @@ async function osrmFetch(mode, coords, { exclude, signal }) {
   if (!r.ok || j?.code !== 'Ok') throw Object.assign(new Error(j?.code || r.status), { code: j?.code, status: r.status });
   return j.routes;
 }
+// Avoid-highways and walking-server fallbacks live here so first-time routing and re-routing behave the same.
+async function routesWithFallback(coords, signal) {
+  let routes = null, approx = false;
+  if (S.avoidHw && nav.mode === 'car') {
+    try { routes = await osrmFetch('car', coords, { exclude: 'motorway', signal }); }
+    catch (e) { if (signal.aborted) throw e; if (e.code === 'InvalidValue' || e.status === 400) toast('This routing server can’t avoid highways — showing the normal route', 3200); else throw e; }
+  }
+  if (!routes) {
+    try { routes = await osrmFetch(nav.mode, coords, { signal }); }
+    catch (e) { // walking server unreachable: approximate from the car network at walking speed rather than leave you stranded
+      if (signal.aborted || nav.mode !== 'foot') throw e;
+      routes = (await osrmFetch('car', coords, { signal })).map(r => ({ ...r, duration: r.distance / 1.35 })); approx = true;
+    }
+  }
+  return { routes, approx };
+}
+const routeCoords = () => [[me.lat, me.lon], ...nav.wps.map(w => [w.lat, w.lon]), [nav.dest.lat, nav.dest.lon]];
 async function fetchRoute(silent) {
   if (!me || !nav.dest) return;
   nav.abort?.abort(); const ac = nav.abort = new AbortController();
-  const coords = [[me.lat, me.lon], ...nav.wps.map(w => [w.lat, w.lon]), [nav.dest.lat, nav.dest.lon]], key = routeKey();
+  const coords = routeCoords(), key = routeKey();
   if (!silent) $('#routeSummary').innerHTML = '<small>Finding the best route…</small>';
   let routes = null, approx = false;
   try {
-    if (S.avoidHw && nav.mode === 'car') {
-      try { routes = await osrmFetch('car', coords, { exclude: 'motorway', signal: ac.signal }); }
-      catch (e) { if (ac.signal.aborted) return; if (e.code === 'InvalidValue' || e.status === 400) toast('This routing server can’t avoid highways — showing the normal route', 3200); else throw e; }
-    }
-    if (!routes) {
-      try { routes = await osrmFetch(nav.mode, coords, { signal: ac.signal }); }
-      catch (e) { // walking server unreachable: approximate from the car network at walking speed rather than leave you stranded
-        if (ac.signal.aborted) return; if (nav.mode !== 'foot') throw e;
-        routes = (await osrmFetch('car', coords, { signal: ac.signal })).map(r => ({ ...r, duration: r.distance / 1.35 })); approx = true;
-      }
-    }
+    ({ routes, approx } = await routesWithFallback(coords, ac.signal));
     rcache.put(key, routes.map(slim));
   } catch (e) {
     if (ac.signal.aborted) return;
@@ -571,7 +583,22 @@ async function fetchRoute(silent) {
   nav.routes = routes.slice(0, 3); nav.sel = 0; nav.idx = 0; nav.off = 0; nav.said.clear();
   drawRoutes(true); renderAlts(); selectAlt(0, true);
 }
+// Re-route while navigating: one request at a time, never cancelled by the next GPS fix, at most one attempt every 20 s.
+async function reroute() {
+  if (nav.rerouting || !me || !nav.dest || Date.now() - (nav.lastReroute || 0) < 20000) return;
+  nav.rerouting = true; nav.lastReroute = Date.now();
+  $('#navText').textContent = 'Rerouting…';
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), 20000);
+  try {
+    const { routes } = await routesWithFallback(routeCoords(), ac.signal);
+    if (!nav.active || !routes?.length) return;
+    nav.routes = routes.slice(0, 1); nav.sel = 0; nav.idx = 0; nav.off = 0; nav.said.clear();
+    drawRoutes(false); nav.steps = nav.routes[0].legs.flatMap(l => l.steps); haptic(30); speak('Rerouting.');
+  } catch {} finally { clearTimeout(t); nav.rerouting = false; }
+}
+function ensureRouteLayers() { try { if (map.getStyle() && !map.getLayer('route-main')) { if (map.getSource('routes')) map.removeSource('routes'); onStyleLoad(); } } catch {} }
 function drawRoutes(fit) {
+  ensureRouteLayers();
   nav.fc = { type: 'FeatureCollection', features: nav.routes.map((r, i) => ({ type: 'Feature', properties: { i, sel: i === nav.sel ? 1 : 0 }, geometry: r.geometry })) };
   map.getSource('routes')?.setData(nav.fc);
   if (fit && !nav.active && nav.routes.length) {
@@ -633,10 +660,19 @@ $('#startNav').addEventListener('click', () => {
   speak(`Starting navigation. ${instr(nav.steps[0])}.`);
   navTick();
 });
-$('#navStop').addEventListener('click', () => { stopNav(false); });
+// End = leave navigation and return to the map. Hide the UI first so a failure elsewhere can never leave you stuck.
+function endNavigation() {
+  document.body.classList.remove('navigating'); $('#navBanner').hidden = true; nav.active = false;
+  try { stopSpeech(); } catch {}
+  try { clearRoute(); } catch (e) { try { syncPanels(); } catch {} }
+  toast('Navigation ended');
+}
+$('#navStop').addEventListener('click', endNavigation);
 function stopNav(silent) {
-  if (!nav.active && silent) return; nav.active = false; speechSynthesis?.cancel?.();
-  document.body.classList.remove('navigating'); $('#navBanner').hidden = true; syncPanels();
+  if (!nav.active && silent) return; nav.active = false;
+  document.body.classList.remove('navigating'); $('#navBanner').hidden = true;
+  try { stopSpeech(); } catch {}
+  try { syncPanels(); } catch {}
   if (!silent) toast('Navigation ended');
 }
 function navTick() {
@@ -654,11 +690,12 @@ function navTick() {
   const kf = `${nav.idx}f`, kn = `${nav.idx}n`;
   if (dNext < near && !nav.said.has(kn)) { nav.said.add(kn); nav.said.add(kf); speak(instr(next)); haptic(30); }
   else if (dNext < far && !nav.said.has(kf)) { nav.said.add(kf); speak(`In ${fmtDist(dNext).replace(' m', ' metres').replace(' km', ' kilometres')}, ${instr(next)}`); }
-  // off-route: >60 m from the line for two consecutive fixes (one-off GPS jitter is ignored)
+  // off-route: farther than max(60 m, 1.5× GPS accuracy) from the line for 3 consecutive good fixes (jitter and bad fixes are ignored)
   const line = nav.routes[nav.sel].geometry.coordinates; let min = Infinity;
   for (let i = 0; i + 1 < line.length; i++) { const d = distToSeg(here, [line[i][1], line[i][0]], [line[i + 1][1], line[i + 1][0]]); if (d < min) min = d; if (min < 15) break; }
-  nav.off = min > 60 ? nav.off + 1 : 0;
-  if (nav.off >= 2) { nav.off = 0; fetchRoute(true); } // silent recompute
+  const lim = Math.max(60, (me.acc || 0) * 1.5);
+  nav.off = (min > lim && (me.acc || 0) <= 100) ? nav.off + 1 : 0;
+  if (nav.off >= 3) { nav.off = 0; reroute(); }
 }
 
 /* ================= voice guidance ================= */
@@ -680,31 +717,58 @@ function segmentByScript(text) {
     cur.text += ch; }
   return segs.filter(s => s.text.trim());
 }
-let voices = [];
+const TTS = ('speechSynthesis' in window) ? window.speechSynthesis : null; // never touch the bare global: it may not exist
+let voices = [], ttsUnlocked = false;
+const NATIVE_TTS = (typeof window.AndroidTTS === 'object' && window.AndroidTTS) ? window.AndroidTTS : null; // set by the Android app
+function stopSpeech() { try { if (NATIVE_TTS) NATIVE_TTS.stop(); else if (TTS && (TTS.speaking || TTS.pending)) TTS.cancel(); } catch {} }
 function loadVoices() {
-  voices = speechSynthesis?.getVoices?.() || [];
-  const sel = $('#voiceSel');
-  sel.innerHTML = '<option value="">System default voice</option>' + voices.map(v => `<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
-  sel.value = voices.some(v => v.name === S.voice.name) ? S.voice.name : '';
+  voices = (!NATIVE_TTS && TTS && TTS.getVoices && TTS.getVoices()) || [];
+  const sel = $('#voiceSel'); sel.textContent = '';
+  if (NATIVE_TTS) { // voice is chosen in Android settings → Text-to-speech output
+    const o = document.createElement('option'); o.value = ''; o.textContent = 'Phone’s text-to-speech voice'; sel.appendChild(o); sel.disabled = true; return;
+  }
+  const def = document.createElement('option'); def.value = ''; def.textContent = TTS ? 'System default voice' : 'Voice not supported here'; sel.appendChild(def);
+  for (const v of voices) { const o = document.createElement('option'); o.value = v.name; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }
+  sel.value = voices.some(v => v.name === S.voice.name) ? S.voice.name : ''; sel.selectedIndex = Math.max(0, sel.selectedIndex);
 }
+// iOS Safari only allows speech after one has been started from a tap: play a silent utterance on the first touch.
+function unlockTts() {
+  if (!TTS || ttsUnlocked) return; ttsUnlocked = true;
+  try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; TTS.speak(u); } catch {}
+}
+for (const ev of ['pointerdown', 'touchend', 'click']) document.addEventListener(ev, unlockTts, { passive: true });
 function speak(text, force) {
-  if (!('speechSynthesis' in window) || (!S.voice.on && !force)) return;
+  if (!S.voice.on && !force) return false;
+  if (NATIVE_TTS) { // Android app: real TTS, each script segment in its own language
+    try { if (!NATIVE_TTS.ready()) { if (force) toast('Phone voice is still starting — try again'); return false; }
+      NATIVE_TTS.speak(JSON.stringify(segmentByScript(text).map(g => ({ text: g.text, lang: g.lang || '' })))); return true; } catch { return false; }
+  }
+  if (!TTS) { if (force) toast('This browser has no speech engine'); return false; }
   try {
-    speechSynthesis.cancel();
-    const chosen = voices.find(v => v.name === S.voice.name);
-    for (const seg of segmentByScript(text)) {
-      const u = new SpeechSynthesisUtterance(seg.text);
-      if (seg.lang) { u.lang = seg.lang; const v = voices.find(x => x.lang.toLowerCase().startsWith(seg.lang.slice(0, 2).toLowerCase())); if (v) u.voice = v; }
-      else if (chosen) u.voice = chosen; // default segment: never assert a lang — some engines drop the whole utterance if the locale has no voice
-      speechSynthesis.speak(u);
-    }
-  } catch {}
+    if (!voices.length) loadVoices();
+    const busy = TTS.speaking || TTS.pending;
+    if (busy) TTS.cancel();                 // cancel() immediately followed by speak() is dropped on iOS → wait a beat after cancelling
+    try { TTS.resume(); } catch {}
+    const run = () => {
+      const chosen = voices.find(v => v.name === S.voice.name);
+      for (const seg of segmentByScript(text)) {
+        const u = new SpeechSynthesisUtterance(seg.text);
+        if (seg.lang) { u.lang = seg.lang; const v = voices.find(x => x.lang.toLowerCase().startsWith(seg.lang.slice(0, 2).toLowerCase())); if (v) u.voice = v; }
+        else if (chosen) u.voice = chosen; // default segment: never assert a lang — some engines drop the whole utterance if the locale has no voice
+        TTS.speak(u);
+      }
+    };
+    busy ? setTimeout(run, 80) : run();
+    return true;
+  } catch { return false; }
 }
-if ('speechSynthesis' in window) { loadVoices(); speechSynthesis.addEventListener?.('voiceschanged', loadVoices); }
+if (TTS) { loadVoices(); TTS.addEventListener?.('voiceschanged', loadVoices); setTimeout(loadVoices, 800); } else loadVoices();
 $('#voiceSel').addEventListener('change', e => { S.voice.name = e.target.value; save(); }); // selecting never speaks; use Test voice
-$('#testVoice').addEventListener('click', () => speak('In 200 metres, turn left onto Jalan Ampang. 你好 東京 서울 Москва', true));
+$('#testVoice').addEventListener('click', () => {
+  unlockTts(); if (speak('In 200 metres, turn left onto Jalan Ampang. 你好 東京 서울 Москва', true)) toast(voices.length ? '🔊 Playing… (check volume and the silent switch)' : '🔊 Playing with the system voice… (check volume and the silent switch)', 3200);
+});
 $('#voiceToggle').addEventListener('change', e => { S.voice.on = e.target.checked; save(); syncMute(); });
-$('#navMute').addEventListener('click', () => { S.voice.on = !S.voice.on; save(); syncMute(); if (!S.voice.on) speechSynthesis?.cancel?.(); });
+$('#navMute').addEventListener('click', () => { S.voice.on = !S.voice.on; save(); syncMute(); if (!S.voice.on) stopSpeech(); });
 function syncMute() { $('#navMute').textContent = S.voice.on ? '🔊' : '🔇'; $('#voiceToggle').checked = S.voice.on; }
 
 /* ================= personalization (localStorage only) ================= */
@@ -843,7 +907,9 @@ function syncUI() {
   $$('#themeSeg button').forEach(b => b.classList.toggle('on', b.dataset.theme === S.theme));
   $('#themeHint').textContent = { dark: 'Pitch-black AMOLED. Easy on the eyes and battery.', light: 'Bright and clean for daylight.', quest: 'Walking only. Cats spawn on the map — tap or stroll past them for XP.' }[S.theme];
   const tt = $('#trafficToggle'); tt.checked = S.traffic && S.theme !== 'quest' && trafficOK(); tt.disabled = S.theme === 'quest';
-  $('#trafficHint').textContent = S.theme === 'quest' ? 'Off in Quest mode — you’re on foot.' : trafficOK() ? 'Overlay from your custom traffic tile server.' : 'No free keyless traffic data exists. Add a traffic tile URL under Custom servers.';
+  $('#trafficHint').textContent = S.theme === 'quest' ? 'Off in Quest mode — you’re on foot.' : trafficOK() ? 'Live traffic on the map (green = flowing, red = slow).' : 'No free keyless traffic data exists. Add a free TomTom key below to turn it on.';
+  $('#trafficProv').value = S.trafficProv || 'tomtom'; $('#trafficKey').value = S.trafficKey || ''; $('#trafficKeyRow').hidden = (S.trafficProv || 'tomtom') !== 'tomtom'; $('#trafficCustomHint').hidden = (S.trafficProv || 'tomtom') !== 'custom';
+  syncTrafficBtn();
   $('#gkey').value = S.gkey; $('#gUsage').textContent = S.gkey ? `Google searches this month: ${gUsage().n} / ${G_LIMIT}. Used only on Enter or when open results look weak.` : ''; $('#weight').value = S.weight; $('#simToggle').checked = S.sim; $('#verLabel').textContent = 'v' + APP_VERSION;
   $('#srvPhoton').value = S.servers.photon; $('#srvNominatim').value = S.servers.nominatim; $('#srvOsrm').value = S.servers.osrm; $('#srvTraffic').value = S.servers.traffic;
   syncMute();
@@ -854,10 +920,16 @@ $('#closeDrawer').addEventListener('click', () => openDrawer(false));
 $('#scrim').addEventListener('click', () => openDrawer(false));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') openDrawer(false); });
 $('#themeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) applyTheme(b.dataset.theme); });
-$('#trafficToggle').addEventListener('change', e => {
-  if (e.target.checked && !trafficOK()) { e.target.checked = false; return toast('Add a traffic tile URL under Custom servers first', 2800); }
-  S.traffic = e.target.checked; save(); applyTraffic();
-});
+function setTraffic(on) {
+  if (on && !trafficOK()) { S.traffic = false; save(); syncUI(); needTrafficSetup(); return; }
+  S.traffic = on; save(); applyTraffic(); syncUI(); if (on) toast('Traffic on 🚦');
+}
+function needTrafficSetup() { renderSaved(); openDrawer(true); $('#trafficCfg').scrollIntoView({ block: 'center' }); toast('Add a free TomTom key to see live traffic', 3200); }
+function syncTrafficBtn() { const b = $('#trafficBtn'); if (!b) return; b.classList.toggle('on', !!S.traffic && trafficOK() && S.theme !== 'quest'); b.hidden = S.theme === 'quest'; }
+$('#trafficToggle').addEventListener('change', e => setTraffic(e.target.checked));
+$('#trafficBtn').addEventListener('click', () => setTraffic(!(S.traffic && trafficOK())));
+$('#trafficProv').addEventListener('change', e => { S.trafficProv = e.target.value; save(); syncUI(); applyTraffic(); });
+$('#trafficSave').addEventListener('click', () => { S.trafficKey = $('#trafficKey').value.trim(); if (S.trafficKey) S.traffic = true; save(); syncUI(); applyTraffic(); toast(S.trafficKey ? 'Traffic key saved — traffic on 🚦' : 'Traffic key removed'); });
 $('#saveKey').addEventListener('click', () => { S.gkey = $('#gkey').value.trim(); save(); toast(S.gkey ? 'Google search enabled' : 'Google search off'); });
 $('#srvToggle').addEventListener('click', () => { $('#srvBox').hidden = !$('#srvBox').hidden; });
 $('#srvSave').addEventListener('click', () => {
