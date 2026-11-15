@@ -5,8 +5,7 @@ const CACHE = 'pawmap-' + VERSION;
 const SHELL = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.webmanifest',
   'icon.svg', 'icon-192.png', 'icon-512.png',
-  'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css',
-  'vendor/googlemutant/Leaflet.GoogleMutant.js',
+  'vendor/maplibre/maplibre-gl.js', 'vendor/maplibre/maplibre-gl.css',
 ];
 
 self.addEventListener('install', e => {

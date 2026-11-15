@@ -11,12 +11,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="vendor/maplibre/maplibre-gl.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body data-theme="dark">
 
 <div id="map" aria-label="Map"></div>
+<div id="scale" aria-hidden="true"><i></i><span></span></div>
 
 <!-- Top bar -->
 <header id="topbar">
@@ -38,6 +39,7 @@
     <div id="navDist">—</div>
     <div id="navText">—</div>
   </div>
+  <button id="navMute" class="icon-btn small" aria-label="Toggle voice">🔊</button>
   <button id="navStop" class="btn ghost">End</button>
 </div>
 
@@ -69,20 +71,35 @@
         <h2 id="destName">Destination</h2>
         <span id="destSub" class="muted"></span>
       </div>
+      <button id="savePlace" class="icon-btn small" aria-label="Save place">☆</button>
       <button id="closeRoute" class="icon-btn small" aria-label="Close route">
         <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
       </button>
     </div>
-    <div id="modeSwitch" class="seg">
-      <button data-mode="car">🚗 Drive</button>
-      <button data-mode="foot">🚶 Walk</button>
+    <div id="saveMenu" class="chips" hidden>
+      <button class="chip" data-save="home">🏠 Set as Home</button>
+      <button class="chip" data-save="work">💼 Set as Work</button>
+      <button class="chip" data-save="fav">⭐ Add to favorites</button>
     </div>
-    <div id="routeSummary" class="summary"></div>
-    <div class="row">
-      <button id="startNav" class="btn primary grow">Start</button>
-      <button id="toggleSteps" class="btn ghost">Steps</button>
+    <div class="scroll">
+      <div id="modeSwitch" class="seg">
+        <button data-mode="car">🚗 Drive</button>
+        <button data-mode="foot">🚶 Walk</button>
+      </div>
+      <div id="alts" class="alts"></div>
+      <div class="chips">
+        <button id="avoidHw" class="chip">🛣️ Avoid highways</button>
+        <button id="addStop" class="chip">➕ Add stop</button>
+        <button id="optimizeStops" class="chip" hidden>🔀 Optimize order</button>
+      </div>
+      <ol id="stops" class="list stops" hidden></ol>
+      <div id="routeSummary" class="summary"></div>
+      <div class="row">
+        <button id="startNav" class="btn primary grow">Start</button>
+        <button id="toggleSteps" class="btn ghost">Steps</button>
+      </div>
+      <ol id="steps" class="list steps" hidden></ol>
     </div>
-    <ol id="steps" class="list steps" hidden></ol>
   </div>
 </section>
 
@@ -125,23 +142,58 @@
     <div class="switch-row">
       <div>
         <div class="label">Traffic</div>
-        <div class="hint" id="trafficHint">Live traffic needs a Google Maps key (below).</div>
+        <div class="hint" id="trafficHint"></div>
       </div>
       <label class="switch"><input id="trafficToggle" type="checkbox"><span></span></label>
     </div>
   </div>
 
   <div class="group">
-    <label class="group-title" for="baseSel">Map style</label>
-    <select id="baseSel">
-      <option value="open">Open map (free, no key)</option>
-      <option value="groad">Google Maps — roadmap</option>
-      <option value="gsat">Google Maps — satellite</option>
-    </select>
-    <label class="group-title" for="gkey" style="margin-top:14px">Google Maps API key <span class="muted">(optional)</span></label>
-    <input id="gkey" type="password" autocomplete="off" placeholder="Paste a key to unlock Google layers">
-    <p class="hint">Stays on this device. Pawmap works fully without it.</p>
+    <div class="switch-row">
+      <div>
+        <div class="label">Voice guidance</div>
+        <div class="hint">Spoken turn-by-turn. Place names in other scripts get their own voice automatically.</div>
+      </div>
+      <label class="switch"><input id="voiceToggle" type="checkbox"><span></span></label>
+    </div>
+    <select id="voiceSel" style="margin-top:12px"></select>
+    <button id="testVoice" class="btn ghost">▶ Test voice</button>
+  </div>
+
+  <div class="group">
+    <label class="group-title">Saved places</label>
+    <ul id="savedList" class="list compact"></ul>
+    <label class="group-title" style="margin-top:14px">Recent searches <button id="clearRecents" class="linkbtn">Clear</button></label>
+    <ul id="recentList" class="list compact"></ul>
+    <label class="group-title" style="margin-top:14px">Trip history <button id="clearTrips" class="linkbtn">Clear</button></label>
+    <ul id="tripList" class="list compact"></ul>
+    <p class="hint">Stored only on this device.</p>
+  </div>
+
+  <div class="group">
+    <label class="group-title" for="gkey">Google Places key <span class="muted">(optional · search only)</span></label>
+    <input id="gkey" type="password" autocomplete="off" placeholder="Adds Google results to search">
+    <p class="hint">Used only for search suggestions. Maps, routing and everything else stay open source. Google’s terms limit where Places results may be shown — read them before shipping commercially.</p>
     <button id="saveKey" class="btn ghost">Save key</button>
+  </div>
+
+  <div class="group">
+    <button id="srvToggle" class="group-title linkbtn wide">Custom servers ▾</button>
+    <div id="srvBox" hidden>
+      <p class="hint">Point Pawmap at your own instances. Leave blank for the free public ones.</p>
+      <label class="group-title" for="srvPhoton">Photon</label>
+      <input id="srvPhoton" type="url" placeholder="https://photon.komoot.io">
+      <label class="group-title" for="srvNominatim">Nominatim</label>
+      <input id="srvNominatim" type="url" placeholder="https://nominatim.openstreetmap.org">
+      <label class="group-title" for="srvOsrm">OSRM <span class="muted">(base URL, supports profiles &amp; exclude)</span></label>
+      <input id="srvOsrm" type="url" placeholder="https://router.project-osrm.org">
+      <label class="group-title" for="srvTraffic">Traffic tiles <span class="muted">(XYZ template)</span></label>
+      <input id="srvTraffic" type="url" placeholder="https://…/{z}/{x}/{y}.png">
+      <div class="row" style="margin-top:10px">
+        <button id="srvSave" class="btn primary grow">Save</button>
+        <button id="srvReset" class="btn ghost grow">Reset</button>
+      </div>
+    </div>
   </div>
 
   <div class="group">
@@ -171,11 +223,11 @@
   </div>
 
   <div class="group foot">
-    <div class="hint">Map data © OpenStreetMap contributors · tiles © CARTO · search by Nominatim · routing by OSRM (FOSSGIS) · places via Overpass. No accounts, no tracking. Only your location is requested.</div>
+    <div class="hint">Map data © OpenStreetMap contributors · tiles by OpenFreeMap · search by Photon &amp; Nominatim · routing by OSRM. No accounts, no tracking. Only your location is requested.</div>
   </div>
 </aside>
 
-<script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/maplibre/maplibre-gl.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
