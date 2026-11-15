@@ -1,4 +1,4 @@
-package app.pawmap;
+package app.mapsandcats;
 
 import android.Manifest;
 import android.app.Activity;
@@ -17,7 +17,7 @@ import android.webkit.WebViewClient;
 
 import androidx.webkit.WebViewAssetLoader;
 
-/** Thin shell: serves the bundled Pawmap web app and forwards the location permission. */
+/** Thin shell: serves the bundled Maps and Cats web app and forwards the location permission. */
 public class MainActivity extends Activity {
     private static final String HOST = "appassets.androidplatform.net";
     private static final int REQ_LOC = 7;
@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
 
     @Override public void onBackPressed() {
         // Let the web app close its own drawer/route first.
-        web.evaluateJavascript("window.__pawmapBack ? window.__pawmapBack() : false", v -> {
+        web.evaluateJavascript("window.__macBack ? window.__macBack() : false", v -> {
             if (!"true".equals(v)) finish();
         });
     }

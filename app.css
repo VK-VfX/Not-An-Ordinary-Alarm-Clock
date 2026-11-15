@@ -74,8 +74,8 @@ body[data-theme="light"] .maplibregl-ctrl-attrib, body[data-theme="light"] .mapl
   display: flex; flex-direction: column; transition: transform .25s; }
 #sheet.collapsed { transform: translateY(calc(100% - 72px - var(--sab))); }
 #sheet .scroll { max-height: calc(58vh - 90px); }
-.handle { align-self: center; width: 100%; height: 22px; border: 0; background: transparent; cursor: pointer; position: relative; flex: none; }
-.handle::after { content: ""; position: absolute; left: 50%; top: 8px; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--line); }
+.handle { align-self: center; width: 100%; height: 34px; border: 0; background: transparent; cursor: pointer; position: relative; flex: none; }
+.handle::after { content: ""; position: absolute; left: 50%; top: 14px; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--line); }
 #nearbyView, #navView { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .sheet-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; flex: none; }
 .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; flex: none; scrollbar-width: none; }
@@ -135,9 +135,11 @@ body[data-theme="quest"] .me i { background: var(--accent); }
 .stop-pin { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 13px; display: grid; place-items: center; border: 2px solid #000; }
 .cluster { min-width: 34px; height: 34px; padding: 0 6px; border-radius: 17px; background: var(--panel); color: var(--accent); border: 2px solid var(--accent); display: grid; place-items: center; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent); }
 .cat { width: 44px; height: 44px; cursor: pointer; }
-.cat span { display: block; font-size: 34px; line-height: 44px; text-align: center; filter: drop-shadow(0 0 6px rgba(255,255,255,.25)); will-change: transform; }
+.cat span { display: block; width: 44px; height: 44px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); will-change: transform; }
+.cat img { width: 100%; height: 100%; display: block; pointer-events: none; -webkit-user-drag: none; }
+img.em { width: 18px; height: 18px; vertical-align: -3px; margin-right: 5px; }
 .cat span.r2 { filter: drop-shadow(0 0 8px #ffd34d); }
-.cat span.r3 { filter: drop-shadow(0 0 10px #b66bff) drop-shadow(0 0 4px #ff5fa2); font-size: 40px; }
+.cat span.r3 { filter: drop-shadow(0 0 10px #b66bff) drop-shadow(0 0 4px #ff5fa2); transform-origin: center; width: 52px; height: 52px; margin: -4px; }
 .cat span.caught { animation: catch .45s forwards; }
 @keyframes catch { to { transform: scale(2) translateY(-30px); opacity: 0; } }
 .xp-pop b { display: block; color: var(--accent); font-size: 18px; text-shadow: 0 0 6px #000, 0 0 2px #000; text-align: center; white-space: nowrap; animation: rise 1s forwards; }

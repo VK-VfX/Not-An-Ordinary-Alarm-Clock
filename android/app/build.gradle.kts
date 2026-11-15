@@ -1,10 +1,10 @@
 plugins { id("com.android.application") }
 
 android {
-    namespace = "app.pawmap"
+    namespace = "app.mapsandcats"
     compileSdk = 34
     defaultConfig {
-        applicationId = "app.pawmap"
+        applicationId = "app.mapsandcats"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -21,7 +21,7 @@ android {
 // Bundle the PWA (repo root) into the APK so it runs offline.
 val copyWeb by tasks.registering(Copy::class) {
     from(rootProject.projectDir.parentFile) {
-        include("index.html", "app.css", "app.js", "manifest.webmanifest", "icon.svg", "icon-*.png", "version.json", "vendor/**")
+        include("index.html", "app.css", "app.js", "manifest.webmanifest", "icon.svg", "icon-*.png", "version.json", "vendor/**", "assets/**")
     }
     into(layout.buildDirectory.dir("web"))
 }

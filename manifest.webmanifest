@@ -1,6 +1,6 @@
 {
-  "name": "Pawmap",
-  "short_name": "Pawmap",
+  "name": "Maps and Cats",
+  "short_name": "Maps & Cats",
   "description": "Maps with no sign-up. Search, navigate, and catch cats while you walk.",
   "start_url": "./",
   "scope": "./",

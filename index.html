@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Pawmap</title>
+<title>Maps and Cats</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -133,7 +133,7 @@
     <div id="themeSeg" class="seg three">
       <button data-theme="dark">🌑 Dark</button>
       <button data-theme="light">☀️ Light</button>
-      <button data-theme="quest">🐾 Quest</button>
+      <button data-theme="quest"><img class="em" src="assets/cats/paws.svg" alt="">Quest</button>
     </div>
     <p class="hint" id="themeHint"></p>
   </div>
@@ -173,14 +173,15 @@
   <div class="group">
     <label class="group-title" for="gkey">Google Places key <span class="muted">(optional · search only)</span></label>
     <input id="gkey" type="password" autocomplete="off" placeholder="Adds Google results to search">
-    <p class="hint">Used only for search suggestions. Maps, routing and everything else stay open source. Google’s terms limit where Places results may be shown — read them before shipping commercially.</p>
+    <p class="hint">Used only for search, and only on Enter or when open results look weak, capped at a monthly budget. Maps, routing and everything else stay open source. Google’s terms limit where Places results may be shown — read them before shipping commercially.</p>
+    <p class="hint" id="gUsage"></p>
     <button id="saveKey" class="btn ghost">Save key</button>
   </div>
 
   <div class="group">
     <button id="srvToggle" class="group-title linkbtn wide">Custom servers ▾</button>
     <div id="srvBox" hidden>
-      <p class="hint">Point Pawmap at your own instances. Leave blank for the free public ones.</p>
+      <p class="hint">Point Maps and Cats at your own instances. Leave blank for the free public ones.</p>
       <label class="group-title" for="srvPhoton">Photon</label>
       <input id="srvPhoton" type="url" placeholder="https://photon.komoot.io">
       <label class="group-title" for="srvNominatim">Nominatim</label>
@@ -212,7 +213,7 @@
     <label class="group-title">App updates</label>
     <div class="switch-row">
       <div>
-        <div class="label">Pawmap <span id="verLabel">v—</span></div>
+        <div class="label">Maps and Cats <span id="verLabel">v—</span></div>
         <div class="hint" id="updStatus">Updates install over the air.</div>
       </div>
     </div>

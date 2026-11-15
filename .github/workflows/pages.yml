@@ -1,4 +1,4 @@
-name: Deploy Pawmap
+name: Deploy Maps and Cats
 on:
   push:
     branches: [main]

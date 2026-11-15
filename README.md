@@ -1,4 +1,4 @@
-# 🐾 Pawmap
+# 🐾 Maps and Cats
 
 A map app with **no accounts, no API keys, no tracking backend**. Search, discover nearby places and navigate — all inside the app. The only permission it asks for is **location**.
 
@@ -16,13 +16,13 @@ Photon/Nominatim/OSRM can be swapped for your own instances under **Settings →
 
 ## Search logic
 - Photon (proximity-ranked, typo-tolerant) and Nominatim (has alt-names Photon lacks) run in parallel. Photon's results come first; Nominatim/Google results within ~111 m of an existing one are dropped (grid-rounded `dedupeKey`).
-- Every result gets a real haversine distance from you and the list is re-sorted by it.
+- **Ranking:** results are scored on text relevance (exact / prefix / word match), real haversine distance, provider agreement (a place both providers return gets a boost) and prominence (landmarks up, side streets down) — not distance alone. Names are requested in your language so "Eiffel Tower" matches the tower, not a local-language variant.
 - **Country scoping:** your country is resolved once (cached reverse-geocode). If any result is in your country, the rest are dropped — otherwise the global list is kept, so "Eiffel Tower" from Malaysia still finds Paris.
-- **Google (optional):** paste a Places key in Settings to add Google results to the blend. Search only — maps and routing never use Google. Check Google's terms on where Places results may be displayed before shipping commercially.
+- **Google (optional):** paste a Places key in Settings to add Google results. Search only — maps and routing never use Google. It is called **only on Enter or when open results look weak**, and a **monthly counter stops at 4,500** (Text Search Pro's free cap is 5,000 — verify current caps) so you never get billed; it then falls back to open search. Google results aren't stored in recents (their terms). Check Google's terms on where Places results may be displayed before shipping commercially.
 
 ## Routing logic
 - Alternatives shown as cards when OSRM finds genuinely different paths.
-- **Avoid highways** sends `exclude=motorway`; the public OSRM demo rejects that (`InvalidValue`), so Pawmap retries without it and says so.
+- **Avoid highways** sends `exclude=motorway`; the public OSRM demo rejects that (`InvalidValue`), so Maps and Cats retries without it and says so.
 - **Multi-stop** with **Optimize order** (nearest-neighbour from your location — a heuristic, not a TSP solver).
 - **Auto re-route** after >60 m off the line for two consecutive fixes (point-to-segment distance, so long straight roads don't false-trigger).
 - **Offline fallback:** last route to each destination is cached and reused if OSRM is unreachable. If the walking server is down, walking time is estimated from the car network.
@@ -34,7 +34,7 @@ Each instruction is split by Unicode script, so a Chinese/Japanese/Korean/Hindi/
 POI clustering below z14.5 (bounded to the viewport, scan-capped) · long-press (550 ms / 10 px) to drop a pin · live scale bar · haptics (Capacitor if present, else Vibration API).
 
 ## Quest mode 🐾
-Walking only. Cats spawn around you — tap one (meow! purr! *let's catch them all!*) or stroll past for XP. Tracks distance walked and rough calories (≈ 0.53 kcal × kg × km). Movement over ~11 km/h is ignored.
+Walking only. Cats (Google Noto emoji artwork — the Gboard set) spawn around you — tap one (meow! purr! *let's catch them all!*) or stroll past for XP. Tracks distance walked and rough calories (≈ 0.53 kcal × kg × km). Movement over ~11 km/h is ignored.
 
 ## Personalization
 Home / Work / up to 5 favorites, recent searches, last 20 trips — plain `localStorage`.

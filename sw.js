@@ -1,11 +1,12 @@
-/* Pawmap service worker — offline shell + over-the-air updates.
+/* Maps and Cats service worker — offline shell + over-the-air updates.
    Bump VERSION (and APP_VERSION in app.js, version.json) to ship an update. */
 const VERSION = '1.0.0';
-const CACHE = 'pawmap-' + VERSION;
+const CACHE = 'mapsandcats-' + VERSION;
 const SHELL = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.webmanifest',
   'icon.svg', 'icon-192.png', 'icon-512.png',
   'vendor/maplibre/maplibre-gl.js', 'vendor/maplibre/maplibre-gl.css',
+  ...['cat-face','cat','grin-cat','grin-smile-cat','smirk-cat','black-cat','kissing-cat','heart-eyes-cat','paws'].map(n => `assets/cats/${n}.svg`),
 ];
 
 self.addEventListener('install', e => {
@@ -13,7 +14,7 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('pawmap-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => (k.startsWith('mapsandcats-') || k.startsWith('pawmap-')) && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('message', e => { if (e.data === 'SKIP_WAITING') self.skipWaiting(); });
 

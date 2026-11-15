@@ -1,4 +1,4 @@
-/* Pawmap — maps with no sign-up. MapLibre + OpenFreeMap, Photon/Nominatim search, OSRM routing.
+/* Maps and Cats — maps with no sign-up. MapLibre + OpenFreeMap, Photon/Nominatim search, OSRM routing.
    Google is used for search suggestions only, and only if the user pastes their own key. */
 (() => {
 'use strict';
@@ -9,7 +9,7 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const KL = [3.139, 101.687]; // [lat, lon] fallback view until we get a fix
 
 /* ================= state ================= */
-const KEY = 'pawmap.v1', RKEY = 'pawmap.routes';
+const KEY = 'mapsandcats.v1', RKEY = 'mapsandcats.routes';
 const S = Object.assign({
   theme: 'dark', traffic: false, gkey: '', weight: 65, sim: false, xp: 0, caught: 0, avoidHw: false,
   voice: { on: true, name: '' },
@@ -97,7 +97,7 @@ function addPoiLayers(s, dark) {
   colorExpr.push('#9ca3af');
   s.layers.push(
     { id: 'poi-dots', type: 'circle', source: 'openmaptiles', 'source-layer': 'poi', minzoom: 14.5, filter: ['has', 'name'],
-      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 14.5, 3.5, 18, 7], 'circle-color': colorExpr, 'circle-stroke-width': 1.2, 'circle-stroke-color': dark ? '#000' : '#fff' } },
+      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 14.5, 2.5, 17, 4.5, 19, 7], 'circle-opacity': .9, 'circle-color': colorExpr, 'circle-stroke-width': 1, 'circle-stroke-color': dark ? '#000' : '#fff' } },
     { id: 'poi-labels', type: 'symbol', source: 'openmaptiles', 'source-layer': 'poi', minzoom: 16, filter: ['has', 'name'],
       layout: { 'text-field': ['get', 'name'], 'text-font': font, 'text-size': 11, 'text-offset': [0, 1], 'text-anchor': 'top', 'text-optional': true, 'text-max-width': 7 },
       paint: { 'text-color': dark ? '#b5b5bb' : '#444', 'text-halo-color': dark ? '#000' : '#fff', 'text-halo-width': 1.2 } });
@@ -217,8 +217,10 @@ let clusterMarkers = [], clusterSig = '';
 function updateClusters() {
   const z = map.getZoom();
   const sig = `${z.toFixed(1)}|${map.getCenter().lng.toFixed(3)}|${map.getCenter().lat.toFixed(3)}|${mapStyleKind}`;
-  if (sig === clusterSig) return; clusterSig = sig;
+  const sig2 = sig + (nav.dest ? '|route' : '');
+  if (sig2 === clusterSig) return; clusterSig = sig2;
   clusterMarkers.forEach(m => m.remove()); clusterMarkers = [];
+  if (nav.dest) return; // keep the route readable: no bubbles while a route is open
   if (z >= 14.5 || z < 11.5 || !map.getSource('openmaptiles') || !map.isStyleLoaded()) return;
   let feats = []; try { feats = map.querySourceFeatures('openmaptiles', { sourceLayer: 'poi', filter: ['has', 'name'] }); } catch { return; }
   const b = map.getBounds(), seen = new Set(), bins = new Map(), CAP = 4000; // cap the scan: tile cache counts are unreliable and can be huge
@@ -349,21 +351,23 @@ async function resolveCountry() {
 }
 function searchOrigin() { if (me) return [me.lat, me.lon]; const c = map.getCenter(); return [c.lat, c.lng]; }
 
+const UI_LANG = (navigator.language || 'en').toLowerCase();
+const PHOTON_LANG = ['en', 'de', 'fr', 'it'].includes(UI_LANG.slice(0, 2)) ? UI_LANG.slice(0, 2) : 'en'; // Photon only localises these
 async function photonSearch(q, o, signal) {
-  const r = await fetch(`${SV().photon}/api/?q=${encodeURIComponent(q)}&limit=8&lat=${o[0]}&lon=${o[1]}`, { signal });
+  const r = await fetch(`${SV().photon}/api/?q=${encodeURIComponent(q)}&limit=8&lat=${o[0]}&lon=${o[1]}&lang=${PHOTON_LANG}`, { signal });
   if (!r.ok) throw new Error(r.status);
   return (await r.json()).features.map(f => {
     const p = f.properties, name = p.name || [p.street, p.housenumber].filter(Boolean).join(' ');
     return { name, sub: [p.name ? p.street : null, p.city || p.locality || p.county, p.state, p.country].filter(Boolean).join(', '),
-      lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0], cc: (p.countrycode || '').toLowerCase() || null, src: 'photon' };
+      lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0], cc: (p.countrycode || '').toLowerCase() || null, src: 'photon', kind: `${p.osm_key}:${p.osm_value}` };
   }).filter(x => x.name);
 }
 async function nominatimSearch(q, o, signal) {
   const vb = `${o[1] - .5},${o[0] + .5},${o[1] + .5},${o[0] - .5}`;
-  const r = await fetch(`${SV().nominatim}/search?format=jsonv2&limit=8&addressdetails=1&q=${encodeURIComponent(q)}&viewbox=${vb}`, { signal });
+  const r = await fetch(`${SV().nominatim}/search?format=jsonv2&limit=8&addressdetails=1&accept-language=${encodeURIComponent(UI_LANG + ',en')}&q=${encodeURIComponent(q)}&viewbox=${vb}`, { signal });
   if (!r.ok) throw new Error(r.status);
   return (await r.json()).map(x => { const parts = x.display_name.split(', ');
-    return { name: x.name || parts[0], sub: parts.slice(1, 4).join(', '), lat: +x.lat, lon: +x.lon, cc: x.address?.country_code || null, src: 'nominatim' }; });
+    return { name: x.name || parts[0], sub: parts.slice(1, 4).join(', '), lat: +x.lat, lon: +x.lon, cc: x.address?.country_code || null, src: 'nominatim', kind: `${x.category}:${x.type}`, imp: +x.importance || 0 }; });
 }
 async function googleSearch(q, o, signal) { // Places API (New) Text Search — optional, search only
   const r = await fetch('https://places.googleapis.com/v1/places:searchText', { method: 'POST', signal,
@@ -372,28 +376,72 @@ async function googleSearch(q, o, signal) { // Places API (New) Text Search — 
   if (!r.ok) throw new Error(r.status);
   return ((await r.json()).places || []).map(p => ({ name: p.displayName?.text || '', sub: p.formattedAddress || '', lat: p.location.latitude, lon: p.location.longitude, cc: null, src: 'google' })).filter(x => x.name);
 }
-async function blendSearch(q, signal) {
+/* --- ranking: text relevance + distance + provider agreement + prominence (not distance alone) --- */
+const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+function relevance(q, r) {
+  const nq = norm(q), nn = norm(r.name); if (!nq || !nn) return 0;
+  if (nn === nq) return 1;
+  if (nn.startsWith(nq)) return .88;
+  const toks = nq.split(' '), words = nn.split(' ');
+  if (toks.every(t => words.some(w => w.startsWith(t)))) return .75;
+  if (nn.includes(nq)) return .6;
+  const hay = nn + ' ' + norm(r.sub);
+  return .15 + .35 * toks.filter(t => hay.includes(t)).length / toks.length;
+}
+const LANDMARK = /^(tourism:(attraction|museum|viewpoint|gallery|zoo|theme_park)|aeroway:|railway:(station|halt)|shop:mall|amenity:(place_of_worship|university|hospital|marketplace)|leisure:(park|stadium)|building:(mosque|church|temple))/;
+const MINOR = /^(highway:|place:(house|house_number)|building:(yes|house|residential))/;
+function mergeRank(q, o, lists) {
+  const keys = new Map(), out = [], hasDigit = /\d/.test(q);
+  for (const list of lists) for (const r of list || []) {
+    const k = dedupeKey(r.lat, r.lon), ex = keys.get(k);
+    if (ex) { ex.agree++; continue; }           // same place from another provider (~111 m grid) → confidence, not a duplicate row
+    r.agree = 1; keys.set(k, r); out.push(r);
+  }
+  for (const r of out) {
+    r.d = dist(o, [r.lat, r.lon]); r.rel = relevance(q, r);
+    const boost = (LANDMARK.test(r.kind || '') ? .12 : 0) - (!hasDigit && MINOR.test(r.kind || '') ? .08 : 0) + (r.imp || 0) * .15;
+    r.score = .55 * r.rel + .25 / (1 + r.d / 8000) + (r.agree > 1 ? .08 : 0) + boost;
+  }
+  // country scope: if anything matches your country, drop the rest; otherwise keep the global list (Eiffel Tower from Malaysia still works)
+  const cc = S.country?.cc; let res = out;
+  if (cc && out.some(r => r.cc === cc)) res = out.filter(r => r.cc === cc || (r.cc == null && r.d < 200000));
+  return res.sort((a, b) => b.score - a.score).slice(0, 8);
+}
+
+/* --- Google: only on Enter or when open results look weak, and never past a monthly budget --- */
+const G_LIMIT = 4500; // under Google's 5,000/month free cap for Text Search (Pro). Verify current caps in Google's pricing docs.
+function gUsage() { const m = new Date().toISOString().slice(0, 7); if (!S.gUsage || S.gUsage.m !== m) S.gUsage = { m, n: 0 }; return S.gUsage; }
+let gWarned = false;
+function gCanCall() {
+  if (!S.gkey) return false;
+  if (gUsage().n < G_LIMIT) return true;
+  if (!gWarned) { gWarned = true; toast('Google search budget used up for this month — using open search', 3200); }
+  return false;
+}
+async function blendSearch(q, signal, { explicit = false, onPartial } = {}) {
   const o = searchOrigin();
-  const jobs = [photonSearch(q, o, signal), nominatimSearch(q, o, signal)]; if (S.gkey) jobs.push(googleSearch(q, o, signal));
-  const [ph, nm, gg] = (await Promise.allSettled(jobs)).map(r => r.status === 'fulfilled' ? r.value : null);
-  if (!ph && !nm && !gg) throw new Error('all providers failed');
-  // 1) Photon first; Nominatim (alt-names Photon lacks) and Google only when not within ~111 m of something already kept
-  const out = [], keys = new Set();
-  for (const list of [ph, nm, gg]) for (const r of list || []) { const k = dedupeKey(r.lat, r.lon); if (keys.has(k)) continue; keys.add(k); out.push(r); }
-  // 2) neither provider ranks by distance → real haversine distance from you, re-sort
-  for (const r of out) r.d = dist(o, [r.lat, r.lon]);
-  out.sort((a, b) => a.d - b.d);
-  // 3) country scope: if anything matches your country, drop the rest; otherwise keep the global list (Eiffel Tower from Malaysia still works)
-  const cc = S.country?.cc;
-  if (cc && out.some(r => r.cc === cc)) return out.filter(r => r.cc === cc || (r.cc == null && r.d < 200000)).slice(0, 8);
-  return out.slice(0, 8);
+  const [ph, nm] = (await Promise.allSettled([photonSearch(q, o, signal), nominatimSearch(q, o, signal)])).map(r => r.status === 'fulfilled' ? r.value : null);
+  if (!ph && !nm && !S.gkey) throw new Error('search providers failed');
+  let out = mergeRank(q, o, [ph, nm]);
+  const weak = !out.length || (out[0].rel < .5 && out[0].agree < 2); // two providers agreeing counts as confident, even if the local-language name differs
+  if (S.gkey && (explicit || weak) && gCanCall()) {
+    onPartial?.(out);
+    gUsage().n++; save(); syncUI();
+    const gg = await googleSearch(q, o, signal).catch(() => null);
+    if (gg) out = mergeRank(q, o, [ph, nm, gg]);
+  } else if (!out.length && !ph && !nm) throw new Error('search providers failed');
+  return out;
 }
 
 let searchT, searchAbort, addingStop = false;
 const qEl = $('#q'), resEl = $('#results');
+function kindLabel(r) { // "Fuel · address" — helps tell apart ten places with the same name
+  const v = (r.kind || '').split(':')[1]; if (!v || ['yes', 'house', 'house_number', 'residential', 'undefined', 'null'].includes(v)) return '';
+  return pretty(v) + ' · ';
+}
 function showList(items, emptyMsg) {
   resEl.hidden = false; resEl._data = items;
-  resEl.innerHTML = items.length ? items.map((r, i) => `<li data-i="${i}"><div class="ico">${r.icon || (r.src === 'google' ? 'G' : '📍')}</div><div class="li-main"><div class="li-title">${esc(r.name)}</div><div class="li-sub">${esc(r.sub)}</div></div><div class="li-dist">${r.d != null ? fmtDist(r.d) : ''}</div></li>`).join('')
+  resEl.innerHTML = items.length ? items.map((r, i) => `<li data-i="${i}"><div class="ico">${r.icon || (r.src === 'google' ? 'G' : '📍')}</div><div class="li-main"><div class="li-title">${esc(r.name)}</div><div class="li-sub">${esc(kindLabel(r))}${esc(r.sub)}</div></div><div class="li-dist">${r.d != null ? fmtDist(r.d) : ''}</div></li>`).join('')
     : `<li class="empty">${emptyMsg}</li>`;
 }
 function showQuick() {
@@ -411,20 +459,22 @@ qEl.addEventListener('input', () => {
   if (v.length < 3) { resEl.hidden = true; return; }
   searchT = setTimeout(doSearch, 450);
 });
-qEl.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(searchT); doSearch(); qEl.blur(); } });
+qEl.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(searchT); doSearch(true); qEl.blur(); } });
 $('#clearQ').addEventListener('click', () => { qEl.value = ''; $('#clearQ').hidden = true; qEl.focus(); showQuick(); });
-async function doSearch() {
+async function doSearch(explicit = false) {
   const text = qEl.value.trim(); if (text.length < 2) return;
   searchAbort?.abort(); const ac = searchAbort = new AbortController();
   showList([], 'Searching…');
-  try { const items = await blendSearch(text, ac.signal); if (ac.signal.aborted) return; showList(items, 'No results. Try a different spelling.'); }
-  catch (e) { if (!ac.signal.aborted) showList([], 'Search failed. Check your connection.'); }
+  try {
+    const items = await blendSearch(text, ac.signal, { explicit, onPartial: p => { if (!ac.signal.aborted && p.length) showList(p, ''); } });
+    if (!ac.signal.aborted) showList(items, 'No results. Try a different spelling.');
+  } catch (e) { if (!ac.signal.aborted) showList([], 'Search failed. Check your connection.'); }
 }
 resEl.addEventListener('click', e => {
   const li = e.target.closest('li[data-i]'); if (!li) return;
   const r = resEl._data[+li.dataset.i]; resEl.hidden = true; qEl.value = '';
   $('#clearQ').hidden = true;
-  const fromSearch = r.icon == null;
+  const fromSearch = r.icon == null && r.src !== 'google'; // Google content isn't stored (terms)
   if (fromSearch) { S.recents = [{ name: r.name, sub: r.sub, lat: r.lat, lon: r.lon }, ...S.recents.filter(x => dedupeKey(x.lat, x.lon) !== dedupeKey(r.lat, r.lon))].slice(0, 8); save(); renderSaved(); }
   choose({ name: r.name, sub: r.sub, lat: r.lat, lon: r.lon });
 });
@@ -693,7 +743,12 @@ $('#clearRecents').addEventListener('click', () => { S.recents = []; save(); ren
 $('#clearTrips').addEventListener('click', () => { S.trips = []; save(); renderSaved(); });
 
 /* ================= Quest mode ================= */
-const CAT_TYPES = [{ e: '🐱', xp: 10, w: 45, r: 0 }, { e: '🐈', xp: 12, w: 25, r: 0 }, { e: '😺', xp: 20, w: 15, r: 1 }, { e: '🐈‍⬛', xp: 35, w: 11, r: 2 }, { e: '😻', xp: 90, w: 4, r: 3 }];
+// Artwork: Google Noto emoji (the Gboard set), bundled in assets/cats so it looks the same on every device.
+const CAT_TYPES = [
+  { img: 'cat-face', xp: 10, w: 34, r: 0 }, { img: 'cat', xp: 12, w: 20, r: 0 }, { img: 'grin-cat', xp: 18, w: 14, r: 1 },
+  { img: 'grin-smile-cat', xp: 20, w: 10, r: 1 }, { img: 'smirk-cat', xp: 25, w: 8, r: 1 }, { img: 'black-cat', xp: 40, w: 8, r: 2 },
+  { img: 'kissing-cat', xp: 60, w: 4, r: 2 }, { img: 'heart-eyes-cat', xp: 90, w: 2, r: 3 },
+];
 const TAP_MSGS = ['Meow! 🐾', 'Purr… purr… 😽', 'Let’s catch them all! 🐱', 'Mrrp?', 'Nyaa~ ♥', 'Meeeow!', 'Prrrrr 💤', 'Gotcha, floof! 😸'];
 const PASS_MSGS = ['A cat brushed past your leg! 🐾', 'Paws crossed — caught one!', 'Sneaky kitty joined you 😼', 'Purrfect timing!'];
 const quest = { on: false, cats: [], timer: null, wobble: null };
@@ -730,7 +785,7 @@ function spawnCat() {
   let roll = Math.random() * CAT_TYPES.reduce((a, c) => a + c.w, 0), type = CAT_TYPES[0];
   for (const c of CAT_TYPES) { if ((roll -= c.w) < 0) { type = c; break; } }
   const pos = offset([me.lat, me.lon], 40 + Math.random() * 260, Math.random() * Math.PI * 2);
-  const el = document.createElement('div'); el.className = 'cat'; el.innerHTML = `<span class="r${type.r}">${type.e}</span>`;
+  const el = document.createElement('div'); el.className = 'cat'; el.innerHTML = `<span class="r${type.r}"><img src="assets/cats/${type.img}.svg" alt="" draggable="false"></span>`;
   const cat = { type, pos, el, span: el.firstChild, phase: Math.random() * 6.28 };
   el.addEventListener('click', ev => { ev.stopPropagation(); catchCat(cat, true); });
   cat.marker = new maplibregl.Marker({ element: el }).setLngLat([pos[1], pos[0]]).addTo(map);
@@ -789,7 +844,7 @@ function syncUI() {
   $('#themeHint').textContent = { dark: 'Pitch-black AMOLED. Easy on the eyes and battery.', light: 'Bright and clean for daylight.', quest: 'Walking only. Cats spawn on the map — tap or stroll past them for XP.' }[S.theme];
   const tt = $('#trafficToggle'); tt.checked = S.traffic && S.theme !== 'quest' && trafficOK(); tt.disabled = S.theme === 'quest';
   $('#trafficHint').textContent = S.theme === 'quest' ? 'Off in Quest mode — you’re on foot.' : trafficOK() ? 'Overlay from your custom traffic tile server.' : 'No free keyless traffic data exists. Add a traffic tile URL under Custom servers.';
-  $('#gkey').value = S.gkey; $('#weight').value = S.weight; $('#simToggle').checked = S.sim; $('#verLabel').textContent = 'v' + APP_VERSION;
+  $('#gkey').value = S.gkey; $('#gUsage').textContent = S.gkey ? `Google searches this month: ${gUsage().n} / ${G_LIMIT}. Used only on Enter or when open results look weak.` : ''; $('#weight').value = S.weight; $('#simToggle').checked = S.sim; $('#verLabel').textContent = 'v' + APP_VERSION;
   $('#srvPhoton').value = S.servers.photon; $('#srvNominatim').value = S.servers.nominatim; $('#srvOsrm').value = S.servers.osrm; $('#srvTraffic').value = S.servers.traffic;
   syncMute();
 }
@@ -850,7 +905,7 @@ if ('serviceWorker' in navigator) {
 
 /* ================= boot ================= */
 // Android back button hook: close drawer / stop nav / close route first, otherwise let the app exit.
-window.__pawmapBack = () => {
+window.__macBack = () => {
   if ($('#drawer').classList.contains('open')) { openDrawer(false); return true; }
   if (nav.active) { stopNav(false); return true; }
   if (nav.dest) { clearRoute(); return true; }
@@ -861,6 +916,6 @@ syncUI(); renderSaved(); renderNearby();
 initMap().then(() => {
   if (S.theme === 'quest') setQuest(true);
   startLocation(); if (S.sim) setSim(true);
-  window.__pawmap = { map, S, nav, quest, onPos, spawnCat, catchCat, segmentByScript, blendSearch, getMe: () => me };
+  window.__mac = { map, S, nav, quest, onPos, spawnCat, catchCat, segmentByScript, blendSearch, relevance, mergeRank, getMe: () => me };
 });
 })();

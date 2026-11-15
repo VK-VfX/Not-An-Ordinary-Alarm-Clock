@@ -21,5 +21,5 @@ jobs:
         run: gradle assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: Pawmap-debug-apk
+          name: MapsAndCats-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
