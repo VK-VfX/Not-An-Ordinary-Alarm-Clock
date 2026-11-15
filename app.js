@@ -719,10 +719,14 @@ function segmentByScript(text) {
 }
 const TTS = ('speechSynthesis' in window) ? window.speechSynthesis : null; // never touch the bare global: it may not exist
 let voices = [], ttsUnlocked = false;
-function stopSpeech() { try { if (TTS && (TTS.speaking || TTS.pending)) TTS.cancel(); } catch {} }
+const NATIVE_TTS = (typeof window.AndroidTTS === 'object' && window.AndroidTTS) ? window.AndroidTTS : null; // set by the Android app
+function stopSpeech() { try { if (NATIVE_TTS) NATIVE_TTS.stop(); else if (TTS && (TTS.speaking || TTS.pending)) TTS.cancel(); } catch {} }
 function loadVoices() {
-  voices = (TTS && TTS.getVoices && TTS.getVoices()) || [];
+  voices = (!NATIVE_TTS && TTS && TTS.getVoices && TTS.getVoices()) || [];
   const sel = $('#voiceSel'); sel.textContent = '';
+  if (NATIVE_TTS) { // voice is chosen in Android settings → Text-to-speech output
+    const o = document.createElement('option'); o.value = ''; o.textContent = 'Phone’s text-to-speech voice'; sel.appendChild(o); sel.disabled = true; return;
+  }
   const def = document.createElement('option'); def.value = ''; def.textContent = TTS ? 'System default voice' : 'Voice not supported here'; sel.appendChild(def);
   for (const v of voices) { const o = document.createElement('option'); o.value = v.name; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }
   sel.value = voices.some(v => v.name === S.voice.name) ? S.voice.name : ''; sel.selectedIndex = Math.max(0, sel.selectedIndex);
@@ -734,8 +738,12 @@ function unlockTts() {
 }
 for (const ev of ['pointerdown', 'touchend', 'click']) document.addEventListener(ev, unlockTts, { passive: true });
 function speak(text, force) {
-  if (!TTS) { if (force) toast('This browser has no speech engine'); return false; }
   if (!S.voice.on && !force) return false;
+  if (NATIVE_TTS) { // Android app: real TTS, each script segment in its own language
+    try { if (!NATIVE_TTS.ready()) { if (force) toast('Phone voice is still starting — try again'); return false; }
+      NATIVE_TTS.speak(JSON.stringify(segmentByScript(text).map(g => ({ text: g.text, lang: g.lang || '' })))); return true; } catch { return false; }
+  }
+  if (!TTS) { if (force) toast('This browser has no speech engine'); return false; }
   try {
     if (!voices.length) loadVoices();
     const busy = TTS.speaking || TTS.pending;
