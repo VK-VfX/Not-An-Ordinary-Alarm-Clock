@@ -600,5 +600,12 @@ applyBase();
 if (S.theme === 'quest') setQuest(true);
 startLocation();
 if (S.sim) setSim(true);
+// Android back button hook: close the drawer / route first, otherwise let the app exit.
+window.__pawmapBack = () => {
+  if ($('#drawer').classList.contains('open')) { openDrawer(false); return true; }
+  if (nav.active) { stopNav(false); return true; }
+  if (nav.dest) { clearRoute(); return true; }
+  return false;
+};
 window.__pawmap = { map, S, onPos, quest, nav, spawnCat, catchCat, getMe: () => me };
 })();
