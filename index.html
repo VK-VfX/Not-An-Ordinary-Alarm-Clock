@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Pawmap</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body data-theme="dark">
+
+<div id="map" aria-label="Map"></div>
+
+<!-- Top bar -->
+<header id="topbar">
+  <button id="menuBtn" class="icon-btn" aria-label="Open settings">
+    <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+    <i id="updateDot" class="dot" hidden></i>
+  </button>
+  <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="Search places or addresses">
+  <button id="clearQ" class="icon-btn small" aria-label="Clear search" hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+  </button>
+</header>
+<ul id="results" class="card" hidden></ul>
+
+<!-- Navigation banner -->
+<div id="navBanner" class="card" hidden>
+  <div id="navArrow">↑</div>
+  <div class="grow">
+    <div id="navDist">—</div>
+    <div id="navText">—</div>
+  </div>
+  <button id="navStop" class="btn ghost">End</button>
+</div>
+
+<!-- Floating buttons -->
+<div id="fabs">
+  <button id="locateBtn" class="fab" aria-label="Centre on my location">
+    <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Nearby / route sheet -->
+<section id="sheet" class="card">
+  <button id="sheetHandle" class="handle" aria-label="Expand or collapse"></button>
+
+  <div id="nearbyView">
+    <div class="sheet-head">
+      <h2>Near you</h2>
+      <span id="locLabel" class="muted">Finding you…</span>
+    </div>
+    <div id="chips" class="chips"></div>
+    <ul id="places" class="list"></ul>
+  </div>
+
+  <div id="navView" hidden>
+    <div class="sheet-head">
+      <div class="grow">
+        <h2 id="destName">Destination</h2>
+        <span id="destSub" class="muted"></span>
+      </div>
+      <button id="closeRoute" class="icon-btn small" aria-label="Close route">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      </button>
+    </div>
+    <div id="modeSwitch" class="seg">
+      <button data-mode="car">🚗 Drive</button>
+      <button data-mode="foot">🚶 Walk</button>
+    </div>
+    <div id="routeSummary" class="summary"></div>
+    <div class="row">
+      <button id="startNav" class="btn primary grow">Start</button>
+      <button id="toggleSteps" class="btn ghost">Steps</button>
+    </div>
+    <ol id="steps" class="list steps" hidden></ol>
+  </div>
+</section>
+
+<!-- Quest HUD -->
+<section id="hud" class="card" hidden>
+  <div class="hud-top">
+    <div class="lvl">Lv <b id="hudLvl">1</b></div>
+    <div class="xpbar"><i id="hudXpFill"></i></div>
+    <div id="hudXp" class="muted">0 XP</div>
+  </div>
+  <div class="hud-stats">
+    <div><b id="hudDist">0.00</b><span>km walked</span></div>
+    <div><b id="hudKcal">0</b><span>kcal burned</span></div>
+    <div><b id="hudCats">0</b><span>cats caught</span></div>
+  </div>
+  <div id="hudHint" class="muted">Walk around — cats are nearby. Tap one or stroll past it!</div>
+</section>
+
+<!-- Settings drawer -->
+<div id="scrim" hidden></div>
+<aside id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <h2>Settings</h2>
+    <button id="closeDrawer" class="icon-btn small" aria-label="Close settings">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+    </button>
+  </div>
+
+  <div class="group">
+    <label class="group-title">Mode</label>
+    <div id="themeSeg" class="seg three">
+      <button data-theme="dark">🌑 Dark</button>
+      <button data-theme="light">☀️ Light</button>
+      <button data-theme="quest">🐾 Quest</button>
+    </div>
+    <p class="hint" id="themeHint"></p>
+  </div>
+
+  <div class="group">
+    <div class="switch-row">
+      <div>
+        <div class="label">Traffic</div>
+        <div class="hint" id="trafficHint">Live traffic needs a Google Maps key (below).</div>
+      </div>
+      <label class="switch"><input id="trafficToggle" type="checkbox"><span></span></label>
+    </div>
+  </div>
+
+  <div class="group">
+    <label class="group-title" for="baseSel">Map style</label>
+    <select id="baseSel">
+      <option value="open">Open map (free, no key)</option>
+      <option value="groad">Google Maps — roadmap</option>
+      <option value="gsat">Google Maps — satellite</option>
+    </select>
+    <label class="group-title" for="gkey" style="margin-top:14px">Google Maps API key <span class="muted">(optional)</span></label>
+    <input id="gkey" type="password" autocomplete="off" placeholder="Paste a key to unlock Google layers">
+    <p class="hint">Stays on this device. Pawmap works fully without it.</p>
+    <button id="saveKey" class="btn ghost">Save key</button>
+  </div>
+
+  <div class="group">
+    <label class="group-title" for="weight">Your weight (kg) <span class="muted">for calories</span></label>
+    <input id="weight" type="number" inputmode="decimal" min="30" max="250" step="1">
+    <div class="switch-row" style="margin-top:14px">
+      <div>
+        <div class="label">Simulate walking</div>
+        <div class="hint">Fake a stroll — handy on a desktop to test Quest mode.</div>
+      </div>
+      <label class="switch"><input id="simToggle" type="checkbox"><span></span></label>
+    </div>
+  </div>
+
+  <div class="group">
+    <label class="group-title">App updates</label>
+    <div class="switch-row">
+      <div>
+        <div class="label">Pawmap <span id="verLabel">v—</span></div>
+        <div class="hint" id="updStatus">Updates install over the air.</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="checkUpd" class="btn ghost grow">Check for updates</button>
+      <button id="installUpd" class="btn primary grow" hidden>Install &amp; restart</button>
+    </div>
+  </div>
+
+  <div class="group foot">
+    <div class="hint">Map data © OpenStreetMap contributors · tiles © CARTO · search by Nominatim · routing by OSRM (FOSSGIS) · places via Overpass. No accounts, no tracking. Only your location is requested.</div>
+  </div>
+</aside>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

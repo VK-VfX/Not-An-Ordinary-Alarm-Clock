@@ -1,14 +1,3 @@
-*.iml
-.gradle/
-.idea/
-local.properties
+node_modules/
+*.log
 .DS_Store
-build/
-captures/
-.externalNativeBuild/
-.cxx/
-*.apk
-*.ap_
-*.dex
-*.class
-/app/release/

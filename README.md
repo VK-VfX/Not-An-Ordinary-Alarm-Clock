@@ -1,90 +1,50 @@
-# Not An Ordinary Alarm Clock
+# 🐾 Pawmap
 
-An Android alarm clock built for people who sleep through normal alarms. It won't
-quietly give up: it rings at max volume on the dedicated alarm stream, escalates
-over time, vibrates, shows a full-screen alert over the lock screen, and requires
-solving a few math problems before it will let you dismiss it.
+A map app with **no sign-up and no Google Play**. Search, discover nearby places and navigate — all inside the app. The only permission it asks for is **location**.
 
-## Features
+- **Auto-detects where you are** on launch and recommends nearby food, coffee, parks, sights and shops.
+- **In-app search & turn-by-turn navigation** (drive or walk). Nothing hands off to another app.
+- **Pitch-black AMOLED** dark theme, plus Light and **Quest** mode.
+- **Hamburger settings**: mode (Dark / Light / Quest), traffic toggle, map style, over-the-air updates.
+- **Quest mode** — walking only. Cute cats spawn around you; tap one (meow! purr! *let's catch them all!*) or stroll past it to earn XP. Tracks distance walked and rough calories burned.
 
-- **Loud, escalating, harsh siren** — synthesized at runtime with `AudioTrack` (no
-  bundled audio file): a swept fundamental layered with an overtone and soft-clipped
-  for a piercing, buzzy tone, played on `STREAM_ALARM` at max device volume with
-  transient audio focus so it overrides whatever else is playing. Volume starts loud
-  and ramps to full within seconds.
-- **Hard vibration** — tight, max-amplitude pulses rather than a gentle buzz.
-- **No snooze** — the alarm keeps ringing until a math question is solved (this is
-  a global Settings toggle if you need to turn it off for accessibility reasons).
-- **Full-screen lock-screen alert** — uses a full-screen notification intent so the
-  ringing screen appears even when the phone is locked, bypassing Do Not Disturb.
-- **Survives reboots** — alarms are persisted in a Room database and rescheduled
-  on `BOOT_COMPLETED`.
-- **Repeating alarms** — per-day-of-week repeat, or one-time (with a live date preview).
-- **Home screen widget** — live clock + next alarm, refreshed whenever alarms change.
-- **Settings screen** — math-challenge toggle, app version, and a link to GitHub Releases.
-- **Foreground service** — keeps the alarm ringing reliably even if the app is
-  swiped away, using a partial wake lock.
+## Maps & keys
 
-## Project layout
+| Feature | Provider | Key? |
+|---|---|---|
+| Base map | OpenStreetMap data, CARTO tiles | No |
+| Search | Nominatim | No |
+| Routing | OSRM (routing.openstreetmap.de) | No |
+| Nearby places | Overpass API | No |
+| Google roadmap / satellite / **live traffic** | Google Maps JS API | Optional — paste your own key in Settings. It stays on your device. |
 
-Standard single-module Android Studio project (Kotlin, View system + ViewBinding,
-Room, Gradle Kotlin DSL):
+Traffic needs the optional Google key (there is no free keyless traffic source). Everything else works out of the box.
 
-```
-app/src/main/java/com/notanordinaryalarmclock/
-  MainActivity.kt            alarm list (swipe to delete, next-alarm card)
-  AddEditAlarmActivity.kt    create/edit alarm, big scrolling time picker
-  AlarmRingActivity.kt       full-screen ringing + math challenge (no snooze)
-  AlarmService.kt            foreground service: sound + vibration + notification
-  AlarmReceiver.kt           AlarmManager callback -> starts the service
-  BootReceiver.kt            reschedules alarms after reboot
-  AlarmScheduler.kt          AlarmManager scheduling logic
-  AlarmApp.kt                notification channel setup
-  SettingsActivity.kt        math-challenge toggle, about/version, check for updates
-  widget/AlarmWidgetProvider.kt  home screen widget
-  data/                      Room entity/DAO/database
-  util/AlarmSoundPlayer.kt   siren synthesizer
-  util/MathChallenge.kt      arithmetic problem generator
-  util/AppSettings.kt        SharedPreferences-backed app settings
+## Install (not via Google Play)
+
+Pawmap is a Progressive Web App. Host it anywhere static (a GitHub Pages workflow is included — enable **Settings → Pages → GitHub Actions**), open the URL in Chrome on Android, then **⋮ → Install app**. It gets its own icon, runs full-screen and works offline for the app shell.
+
+> Geolocation needs HTTPS (GitHub Pages is) or `localhost`.
+
+## Over-the-air updates
+
+Installed copies check for a new version on launch and every 30 minutes. **Settings → Check for updates** forces a check; when one is ready you get a dot on ☰ and an **Install & restart** button. To ship an update:
+
+```bash
+./bump-version.sh 1.1.0 "What's new"
+git commit -am "Release 1.1.0" && git push
 ```
 
-## Building an APK
+## Develop
 
-This repo ships a GitHub Actions workflow (`.github/workflows/android-build.yml`)
-that builds a debug APK on every push and uploads it as a workflow artifact —
-download it from the Actions run summary and install directly.
-
-To build locally with Android Studio or the CLI:
-
-```
-./gradlew assembleDebug
-# APK at app/build/outputs/apk/debug/app-debug.apk
+```bash
+python3 -m http.server 8000   # then open http://localhost:8000
 ```
 
-Requires a JDK 17 and the Android SDK (compileSdk 34); Android Studio will
-prompt to install anything missing.
+No build step, no dependencies to install (Leaflet is vendored). In Settings turn on **Simulate walking** to test Quest mode from a desktop.
 
-## Releases
+## Notes
 
-Pushing a tag matching `v*` (e.g. `v2.0.0`) triggers the same workflow to also publish
-a [GitHub Release](https://github.com/VK-VfX/Not-An-Ordinary-Alarm-Clock/releases) with
-the APK attached, alongside auto-generated release notes.
-
-## Installing the APK
-
-The debug APK is unsigned by a release key, so on-device you'll need to allow
-"install from unknown sources" for whichever app you use to open the APK file,
-then tap it to install.
-
-## Permissions
-
-| Permission | Why |
-|---|---|
-| `SCHEDULE_EXACT_ALARM` | Required on Android 12+ to fire alarms at the exact requested time. |
-| `USE_FULL_SCREEN_INTENT` | Shows the ringing screen over the lock screen. |
-| `POST_NOTIFICATIONS` | Required on Android 13+ to show the alarm notification. |
-| `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Keeps the alarm's audio/vibration running reliably. |
-| `RECEIVE_BOOT_COMPLETED` | Reschedules alarms after the device restarts. |
-| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Prompts to exempt the app from battery optimization so alarms aren't delayed. |
-
-On first launch the app requests these where a runtime prompt is needed.
+- Calories use ≈ 0.53 kcal × kg × km for walking; set your weight in Settings.
+- Quest ignores movement faster than ~11 km/h so driving doesn't farm XP.
+- Public routing/search/places servers are shared community services — fine for personal use; self-host them if you ship widely.
