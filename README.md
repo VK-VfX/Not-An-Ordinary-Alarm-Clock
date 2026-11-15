@@ -51,3 +51,6 @@ There is no free keyless traffic data. The toggle works with any XYZ raster traf
 python3 -m http.server 8000   # http://localhost:8000
 ```
 No build step. Settings → **Simulate walking** tests Quest mode from a desktop.
+
+## Logo & icons
+`assets/logo/source.jpg` is the master logo. `python3 tools/make-icons.py` (needs pillow, numpy, opencv-python-headless) regenerates every icon: PWA any/maskable/monochrome, favicons, and the Android adaptive icon with a **themed monochrome layer** (Pixel / Material You tinting, Android 13+) plus legacy launcher icons.
