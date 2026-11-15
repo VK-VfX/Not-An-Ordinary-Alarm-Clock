@@ -1,11 +1,13 @@
 name: Build APK
-# Builds a debug-signed, sideloadable APK as a downloadable workflow artifact. Does NOT publish a release.
+# Builds a debug-signed, sideloadable APK. On a push to the default branch it also publishes a GitHub Release with the APK attached.
 on:
+  push:
+    branches: ["claude/loud-alarm-clock-apk-hh77tt"]
   pull_request:
     paths: ["android/**", ".github/workflows/apk.yml", "index.html", "app.js", "app.css", "assets/**", "vendor/**"]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -18,12 +20,26 @@ jobs:
           SDKM=$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager | sort -V | tail -1)
           yes | "$SDKM" --licenses > /dev/null || true
           "$SDKM" "platforms;android-34" "build-tools;34.0.0"
-      - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: "8.9" }
       - name: Build debug APK
         working-directory: android
-        run: gradle assembleDebug --stacktrace
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+      - name: Name the APK
+        id: v
+        run: |
+          VER=$(python3 -c "import json;print(json.load(open('version.json'))['version'])")
+          cp android/app/build/outputs/apk/debug/app-debug.apk "MapsAndCats-v${VER}.apk"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: MapsAndCats-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: MapsAndCats-v${{ steps.v.outputs.version }}.apk
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}
+          name: Maps and Cats v${{ steps.v.outputs.version }}
+          files: MapsAndCats-v${{ steps.v.outputs.version }}.apk
+          generate_release_notes: true

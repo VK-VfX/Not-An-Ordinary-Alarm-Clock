@@ -1,7 +1,7 @@
-name: Deploy Maps and Cats
+name: Deploy Maps and Cats (web)
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/loud-alarm-clock-apk-hh77tt"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,8 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Assemble site (web files only)
+        run: |
+          mkdir _site
+          cp -r index.html app.css app.js sw.js manifest.webmanifest version.json favicon-*.png icon-*.png assets vendor _site/
+          touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
