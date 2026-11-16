@@ -9,6 +9,8 @@
     <!-- Android 11+: lets the app see/bind the phone's text-to-speech engine -->
     <queries>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
+        <package android:name="app.skypix.weather" />
+        <package android:name="com.nikopick.zamoled" />
     </queries>
 
     <application

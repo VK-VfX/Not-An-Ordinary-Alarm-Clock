@@ -65,6 +65,21 @@ public class MainActivity extends Activity {
         tts.setLanguage(avail >= TextToSpeech.LANG_AVAILABLE ? want : defaultLocale);
         tts.speak(s[0], TextToSpeech.QUEUE_FLUSH, null, "mc" + (ttsId++));
     }
+    /** Exposed to the page as window.AndroidApps: opens a sibling app (Purrcast, Zamoled), or its page when it isn't installed. */
+    private class AppsBridge {
+        @JavascriptInterface public boolean installed(String pkg) {
+            return getPackageManager().getLaunchIntentForPackage(pkg) != null;
+        }
+        @JavascriptInterface public void open(String pkg, String url) {
+            runOnUiThread(() -> {
+                try {
+                    Intent li = getPackageManager().getLaunchIntentForPackage(pkg);
+                    if (li != null) { startActivity(li); return; }
+                    if (url != null && url.startsWith("https://github.com/VK-VfX/")) startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                } catch (Exception ignored) {}
+            });
+        }
+    }
     /** Exposed to the page as window.AndroidTTS */
     private class TtsBridge {
         @JavascriptInterface public boolean ready() { return ttsReady; }
@@ -124,6 +139,7 @@ public class MainActivity extends Activity {
         });
         initTts();
         web.addJavascriptInterface(new TtsBridge(), "AndroidTTS");
+        web.addJavascriptInterface(new AppsBridge(), "AndroidApps");
         web.loadUrl("https://" + HOST + "/index.html");
     }
 

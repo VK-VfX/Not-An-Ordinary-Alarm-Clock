@@ -917,6 +917,13 @@ function syncUI() {
 function openDrawer(o) { $('#drawer').classList.toggle('open', o); $('#drawer').setAttribute('aria-hidden', String(!o)); $('#scrim').hidden = !o; }
 $('#menuBtn').addEventListener('click', () => { renderSaved(); openDrawer(true); });
 $('#closeDrawer').addEventListener('click', () => openDrawer(false));
+// The trio: open the sibling apps (Android shell only; the website falls back to their pages)
+for (const b of document.querySelectorAll('[data-pkg]')) {
+  b.addEventListener('click', () => {
+    if (window.AndroidApps) window.AndroidApps.open(b.dataset.pkg, b.dataset.url);
+    else window.open(b.dataset.url, '_blank', 'noopener');
+  });
+}
 $('#scrim').addEventListener('click', () => openDrawer(false));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') openDrawer(false); });
 $('#themeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) applyTheme(b.dataset.theme); });
