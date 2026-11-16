@@ -910,7 +910,7 @@ function syncUI() {
   $('#trafficHint').textContent = S.theme === 'quest' ? 'Off in Quest mode — you’re on foot.' : trafficOK() ? 'Live traffic on the map (green = flowing, red = slow).' : 'No free keyless traffic data exists. Add a free TomTom key below to turn it on.';
   $('#trafficProv').value = S.trafficProv || 'tomtom'; $('#trafficKey').value = S.trafficKey || ''; $('#trafficKeyRow').hidden = (S.trafficProv || 'tomtom') !== 'tomtom'; $('#trafficCustomHint').hidden = (S.trafficProv || 'tomtom') !== 'custom';
   syncTrafficBtn();
-  $('#gkey').value = S.gkey; $('#gUsage').textContent = S.gkey ? `Google searches this month: ${gUsage().n} / ${G_LIMIT}. Used only on Enter or when open results look weak.` : ''; $('#weight').value = S.weight; $('#simToggle').checked = S.sim; $('#verLabel').textContent = 'v' + APP_VERSION;
+  $('#gkey').value = S.gkey; $('#gUsage').textContent = S.gkey ? `Google searches this month: ${gUsage().n} / ${G_LIMIT}. Used only on Enter or when open results look weak.` : ''; $('#weight').value = S.weight; $('#simToggle').checked = S.sim; $('#verLabel').textContent = 'v' + APP_VERSION; $('#aboutVer').textContent = 'Version ' + APP_VERSION;
   $('#srvPhoton').value = S.servers.photon; $('#srvNominatim').value = S.servers.nominatim; $('#srvOsrm').value = S.servers.osrm; $('#srvTraffic').value = S.servers.traffic;
   syncMute();
 }

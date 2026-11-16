@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
                 try {
                     Intent li = getPackageManager().getLaunchIntentForPackage(pkg);
                     if (li != null) { startActivity(li); return; }
-                    if (url != null && url.startsWith("https://github.com/VK-VfX/")) startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    if (url != null && (url.startsWith("https://github.com/VK-VfX/") || url.startsWith("https://t.me/"))) startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                 } catch (Exception ignored) {}
             });
         }

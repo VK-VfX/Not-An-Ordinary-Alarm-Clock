@@ -4,7 +4,7 @@ const VERSION = '1.0.1';
 const CACHE = 'mapsandcats-' + VERSION;
 const SHELL = [
   './', 'index.html', 'app.css', 'app.js', 'manifest.webmanifest',
-  'favicon-32.png', 'favicon-48.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icon-monochrome-512.png', 'assets/logo/logo-96.png',
+  'favicon-32.png', 'favicon-48.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icon-monochrome-512.png', 'assets/logo/logo-96.png', 'assets/profile.png',
   'vendor/maplibre/maplibre-gl.js', 'vendor/maplibre/maplibre-gl.css',
   ...['cat-face','cat','grin-cat','grin-smile-cat','smirk-cat','black-cat','kissing-cat','heart-eyes-cat','paws'].map(n => `assets/cats/${n}.svg`),
 ];

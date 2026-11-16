@@ -1,8 +1,8 @@
 :root {
   --bg: #000;
   --panel: #000;
-  --panel-2: #0b0b0c;
-  --line: #1d1d20;
+  --panel-2: #0d0d10;
+  --line: rgba(255,255,255,.1);
   --text: #f2f2f3;
   --muted: #8a8a92;
   --accent: #3df5d0;
@@ -14,7 +14,7 @@
 }
 body[data-theme="light"] {
   --bg: #fff; --panel: #fff; --panel-2: #f4f5f7; --line: #e3e5ea;
-  --text: #101114; --muted: #6a6f7a; --accent: #0a7cff; --accent-ink: #fff;
+  --text: #101114; --muted: #6a6f7a; --accent: #00796b; --accent-ink: #fff;
   --shadow: 0 8px 30px rgba(0,0,0,.18);
 }
 body[data-theme="quest"] {
@@ -209,3 +209,12 @@ body.hud-on #scale { bottom: calc(172px + var(--sab)); }
 button, .chip, .seg button, .alt, .fab { touch-action: manipulation; }
 #fabs .fab { font-size: 22px; line-height: 1; }
 #trafficCfg select { margin-bottom: 4px; }
+
+/* ---- family look shared with Purrcast and Zamoled: condensed bold headings, mono captions, 24px cards ---- */
+h2, h3, .brand h2, .label, .lvl, #navBanner b { font-family: "sans-serif-condensed", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif; font-weight: 700; letter-spacing: .2px; }
+.group-title, .hint, .muted { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: .3px; }
+#results, #hud, #navBanner, .sheet, #sheet { border-radius: 24px; }
+.about { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 22px 16px; border: 1px solid var(--line); border-radius: 24px; background: var(--panel-2); }
+.about img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
+.about h3 { margin: 14px 0 2px; font-size: 22px; }
+.about .pill { margin-top: 12px; padding: 5px 14px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 18%, var(--panel-2)); font-size: 13px; }
